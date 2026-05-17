@@ -1,0 +1,43 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Build outputs
+target/
+build/
+out/
+dist/
+.next/
+*.class
+
+# Dependencies
+node_modules/
+.gradle/
+.pnp.*
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temp
+tmp/
+temp/
+.cache/
+
+# Worktrees (개발 방법론 보고서의 ~/work/ 디렉터리는 외부에 둠)
+work/

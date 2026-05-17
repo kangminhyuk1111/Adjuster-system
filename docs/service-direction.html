@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>서비스 방향성 분석 보고서 — 독립손해사정사(직접선임권 트랙) 어플</title>
+<style>
+  :root {
+    --ink: #111418;
+    --ink-2: #2b303a;
+    --mute: #6b7280;
+    --line: #e5e7eb;
+    --line-2: #d1d5db;
+    --bg: #fafaf7;
+    --card: #ffffff;
+    --accent: #1f3a8a;
+    --accent-soft: #eef2ff;
+    --warn: #b45309;
+    --warn-soft: #fff7ed;
+    --ok: #166534;
+    --ok-soft: #ecfdf5;
+    --bad: #b91c1c;
+    --bad-soft: #fef2f2;
+    --code-bg: #f3f4f6;
+    --rad: 6px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+  body {
+    font-family: "Pretendard", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-size: 15.5px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1020px; margin: 0 auto; padding: 56px 28px 96px; }
+  h1, h2, h3, h4 { color: var(--ink); letter-spacing: -0.01em; }
+  h1 { font-size: 30px; margin: 0 0 8px; line-height: 1.3; }
+  h2 { font-size: 22px; margin: 56px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 17px; margin: 28px 0 10px; }
+  h4 { font-size: 15px; margin: 18px 0 6px; color: var(--ink-2); }
+  p { margin: 8px 0 12px; }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+  a:hover { border-bottom-color: var(--accent); }
+  ul, ol { margin: 8px 0 14px; padding-left: 22px; }
+  li { margin: 4px 0; }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-size: 0.9em; font-family: "JetBrains Mono", Consolas, monospace; }
+  small, .muted { color: var(--mute); font-size: 13px; }
+
+  .meta {
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: var(--rad);
+    padding: 18px 22px;
+    margin: 24px 0 32px;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 6px 18px;
+    font-size: 13.5px;
+  }
+  .meta dt { color: var(--mute); font-weight: 500; }
+  .meta dd { margin: 0; }
+
+  .toc {
+    border-left: 3px solid var(--accent);
+    background: var(--card);
+    padding: 14px 20px;
+    margin: 24px 0 40px;
+    border-radius: 0 var(--rad) var(--rad) 0;
+  }
+  .toc ol { margin: 4px 0; padding-left: 22px; font-size: 14.5px; }
+  .toc li { margin: 3px 0; }
+  .toc strong { color: var(--ink); }
+
+  .callout {
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    background: var(--card);
+    border-radius: var(--rad);
+    padding: 14px 18px;
+    margin: 14px 0 22px;
+  }
+  .callout.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+  .callout.ok { border-left-color: var(--ok); background: var(--ok-soft); }
+  .callout.bad { border-left-color: var(--bad); background: var(--bad-soft); }
+  .callout h4 { margin-top: 0; }
+
+  .opt {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin: 18px 0 28px;
+  }
+  .opt .card {
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: var(--rad);
+    padding: 18px 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .opt .card h3 { margin: 0 0 4px; font-size: 16px; }
+  .opt .card .lbl { font-size: 12px; color: var(--mute); text-transform: uppercase; letter-spacing: 0.04em; }
+  .opt .card .desc { font-size: 13.5px; color: var(--ink-2); line-height: 1.6; }
+  .opt .card .row {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 4px 10px;
+    font-size: 13px;
+    margin-top: 6px;
+  }
+  .opt .card .row dt { color: var(--mute); }
+  .opt .card .row dd { margin: 0; color: var(--ink-2); }
+  .opt .card.pick { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .opt .card.pick .badge {
+    align-self: flex-start;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  @media (max-width: 800px) {
+    .opt { grid-template-columns: 1fr; }
+  }
+
+  .phase {
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: var(--rad);
+    padding: 20px 22px;
+    margin: 16px 0;
+    position: relative;
+  }
+  .phase .head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .phase .pname {
+    background: var(--accent);
+    color: #fff;
+    padding: 3px 11px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .phase h3 { margin: 0; font-size: 17px; }
+  .phase .when { color: var(--mute); font-size: 13px; }
+  .phase dl {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 6px 14px;
+    margin: 12px 0 4px;
+    font-size: 14px;
+  }
+  .phase dt { color: var(--mute); font-weight: 500; }
+  .phase dd { margin: 0; }
+
+  table.mx {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0 28px;
+    font-size: 13.5px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--rad);
+    overflow: hidden;
+  }
+  table.mx th, table.mx td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  table.mx th {
+    background: #f3f4f6;
+    font-weight: 600;
+    font-size: 12.5px;
+    color: var(--ink-2);
+  }
+  table.mx tr:last-child td { border-bottom: none; }
+  .score { font-weight: 700; }
+  .score.h { color: var(--ok); }
+  .score.m { color: var(--warn); }
+  .score.l { color: var(--bad); }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 18px 0 28px;
+  }
+  .stat {
+    border: 1px solid var(--line);
+    border-radius: var(--rad);
+    background: var(--card);
+    padding: 14px 16px;
+  }
+  .stat .n { font-size: 20px; font-weight: 700; color: var(--accent); line-height: 1.2; }
+  .stat .lbl { color: var(--mute); font-size: 12.5px; margin-top: 4px; }
+  @media (max-width: 720px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .tl {
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: var(--rad);
+    padding: 16px 22px;
+    margin: 14px 0 22px;
+  }
+  .tl ul { list-style: none; padding-left: 0; margin: 0; }
+  .tl li {
+    position: relative;
+    padding: 6px 0 6px 22px;
+    border-left: 2px solid var(--line);
+    margin-left: 6px;
+  }
+  .tl li::before {
+    content: "";
+    position: absolute;
+    left: -7px;
+    top: 14px;
+    width: 12px;
+    height: 12px;
+    background: var(--accent);
+    border-radius: 50%;
+    border: 2px solid var(--card);
+  }
+  .tl li .d { color: var(--accent); font-weight: 600; font-size: 13.5px; }
+  .tl li .t { color: var(--ink-2); font-size: 14px; margin-left: 8px; }
+
+  footer {
+    margin-top: 72px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    color: var(--mute);
+    font-size: 12.5px;
+  }
+  hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="muted" style="margin:0 0 6px; letter-spacing:0.04em; text-transform:uppercase; font-size:12px;">서비스 방향성 분석 보고서</p>
+  <h1>독립손해사정사(직접선임권 트랙) 어플의 진입 전략과 단계별 계획</h1>
+  <p class="muted"><a href="painpoints.html">painpoints.html</a>에 정리한 페인포인트 15가지를 입력으로, 어디부터 만들고 어디로 확장할지 결정한다.</p>
+</header>
+
+<dl class="meta">
+  <dt>분석 입력</dt><dd><code>docs/painpoints.html</code> (페인포인트 상위 15개, 1차 출처 검증 완료)</dd>
+  <dt>결정 범위</dt><dd>(1) 어느 쪽 사용자부터 잡을지, (2) 첫 출시판에 넣을 단일 기능, (3) 1·2·3단계 계획, (4) 측정 지표</dd>
+  <dt>주 사용자</dt><dd>독립손해사정사 / 독립손해사정법인 (직접선임권 트랙)</dd>
+  <dt>부 사용자</dt><dd>피해자(보험금청구권자) — 사정사의 일을 받아 보는 쪽</dd>
+  <dt>작성일</dt><dd>2026-05-17</dd>
+</dl>
+
+<div class="callout">
+  <h4>한 줄 결론</h4>
+  <p><strong>법령 의무를 자동으로 처리해 주는 사정사용 업무 어플</strong>로 시작한다. 이후 <strong>피해자가 자기 사건 진행상황을 직접 볼 수 있는 화면</strong>으로 양쪽을 잇고, 마지막으로 <strong>보고서·서류 자동화와 시장 인지도 형성</strong>까지 확장한다. 세 가지를 한꺼번에 만들지 말고 <strong>법령 의무 → 피해자 화면 → 업무 자동화</strong> 순서로 한 층씩 쌓는다.</p>
+  <p>근거 셋. (가) 2024년 8월 7일부터 손해사정서 의무 교부가 시행됐다. <strong>안 지키면 행정제재</strong>이므로 사정사가 도구를 스스로 찾아온다. 마케팅 비용이 거의 들지 않는다. (나) 사정사가 쓰는 업무 도구는 시중에 거의 없다. <strong>비어 있는 시장</strong>을 먼저 차지할 수 있다. (다) 직접선임권 자체의 이용률이 <strong>0.2%</strong>밖에 안 된다. 피해자 매칭부터 시작하면 사정사 쪽 기반이 비어 있어 매칭이 안 된다. 사정사를 먼저 도구로 묶는 것이 자연스럽다.</p>
+</div>
+
+<nav class="toc">
+  <strong>목차</strong>
+  <ol>
+    <li>무엇을 결정해야 하는가</li>
+    <li>세 가지 진입 안 비교</li>
+    <li>권고 — 쐐기처럼 단계 누적</li>
+    <li>1·2·3단계 상세 계획</li>
+    <li>경쟁자와의 차이</li>
+    <li>위험과 대응</li>
+    <li>측정 지표</li>
+    <li>다음에 할 일</li>
+  </ol>
+</nav>
+
+<h2>1. 무엇을 결정해야 하는가</h2>
+
+<p>방향성을 정하려면 네 가지 변수를 결정해야 한다.</p>
+
+<ol>
+  <li><strong>누구부터 잡을지</strong> — 공급 측(사정사) / 수요 측(피해자) / 양쪽 동시 중 어디부터.</li>
+  <li><strong>첫 기능</strong> — 법령 의무 처리(P1) / 업무 자동화(P3·P6) / 피해자 신뢰(P2·P9) 중 무엇부터.</li>
+  <li><strong>시점</strong> — 법령 시행 일정(2024.8.7 → 2025.10.28 → 2026.1.1) 중 어느 마일스톤에 맞출지.</li>
+  <li><strong>경계</strong> — 실손 청구앱(실손24·보맵 등)과 영역을 어떻게 분리할지.</li>
+</ol>
+
+<div class="callout warn">
+  <h4>이미 정해진 경계</h4>
+  <ul>
+    <li><strong>대상 트랙</strong>은 직접선임권 한 갈래만. 보험사 위탁 사정사는 제외 (사업계획서 명시, [[project_adjuster_app]]).</li>
+    <li><strong>대상 보험</strong>은 배상책임 6종 중심 (일상생활/영업/전문인/생산물/의사/근로자재해). 실손 청구는 실손24가 점유한 영역이라 부가 채널로만.</li>
+    <li><strong>3단계의 보험내역 연계</strong>(신용정보원 연동 등)는 <strong>유보</strong> 상태 ([[project_adjuster_app]]).</li>
+  </ul>
+  <p>따라서 이 보고서는 나머지 변수(누구부터·첫 기능·시점)를 결정한다.</p>
+</div>
+
+<h2>2. 세 가지 진입 안 비교</h2>
+
+<p>페인포인트 상위 15개 중 어플이 직접 풀 수 있는 항목을 묶으면 세 개의 진입 후보가 나온다.</p>
+
+<div class="opt">
+  <div class="card pick">
+    <span class="badge">권고</span>
+    <span class="lbl">A안 · 사정사부터</span>
+    <h3>법령 의무 자동화 어플</h3>
+    <p class="desc">손해사정서 자동 작성 · 피해자 전자 확인 · 보험사 교부 기록 보관을 하나의 흐름으로 묶는다. <strong>P1·P11</strong>을 정조준.</p>
+    <dl class="row">
+      <dt>수요 압박</dt><dd>법령 강제 (2024.8.7 시행)</dd>
+      <dt>경쟁</dt><dd>사정사용 업무 도구 거의 없음</dd>
+      <dt>마케팅</dt><dd>"안 쓰면 제재"가 곧 마케팅</dd>
+      <dt>위험</dt><dd>보험사 교부 기록 연동 협조 필요</dd>
+      <dt>회수</dt><dd>건당 보수 20만원 × 회전 개선</dd>
+    </dl>
+  </div>
+
+  <div class="card">
+    <span class="lbl">B안 · 사정사부터</span>
+    <h3>업무 자동화 어플</h3>
+    <p class="desc">보고서 표준 양식·전자 서류·중복보험 안분·과실 분담 자동 계산. <strong>P3·P4·P5·P6</strong>.</p>
+    <dl class="row">
+      <dt>수요 압박</dt><dd>건당 보수 하락 (30만 → 20만원)</dd>
+      <dt>경쟁</dt><dd>사정사용 업무 도구 거의 없음</dd>
+      <dt>마케팅</dt><dd>"시간 절약" 가치 입증이 필요</dd>
+      <dt>위험</dt><dd>사정사가 종이 습관을 바꿔야 함</dd>
+      <dt>회수</dt><dd>회전율과 직결 (꾸준한 가치)</dd>
+    </dl>
+  </div>
+
+  <div class="card">
+    <span class="lbl">C안 · 피해자부터</span>
+    <h3>피해자 매칭 + 진행상황 화면</h3>
+    <p class="desc">사고 유형 입력 → 직접선임권 적용 여부 판정 → 인근 사정사 매칭 → 사건 단계 시각화. <strong>P2·P9·P13</strong>.</p>
+    <dl class="row">
+      <dt>수요 압박</dt><dd>분쟁민원 +31.6%, 처리기간 2배</dd>
+      <dt>경쟁</dt><dd>실손 영역엔 청구앱 다수 있음</dd>
+      <dt>마케팅</dt><dd>인지도 0.2% — 시장을 키워야 함</dd>
+      <dt>위험</dt><dd>사정사 기반이 없어 매칭 실패 가능</dd>
+      <dt>회수</dt><dd>가입자 임계점 넘으면 큰 폭 성장</dd>
+    </dl>
+  </div>
+</div>
+
+<h3>안별 정량 비교</h3>
+
+<table class="mx">
+  <thead>
+    <tr>
+      <th>평가 축</th>
+      <th>A · 법령 의무 자동화</th>
+      <th>B · 업무 자동화</th>
+      <th>C · 피해자 매칭</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>수요 강제성<br><small class="muted">(법령·시장 압박)</small></td>
+      <td><span class="score h">상</span> 법령 의무 + 행정제재</td>
+      <td><span class="score m">중</span> 단가 하락 압박</td>
+      <td><span class="score m">중</span> 분쟁은 늘지만 인지도 낮음</td>
+    </tr>
+    <tr>
+      <td>구현 난이도<br><small class="muted">(첫 출시판 6개월 기준)</small></td>
+      <td><span class="score m">중</span> 양식 자동화 + 기록 보관</td>
+      <td><span class="score m">중</span> 보고서 모듈 분해</td>
+      <td><span class="score l">하</span> 사정사+피해자 동시 필요</td>
+    </tr>
+    <tr>
+      <td>경쟁 부재도</td>
+      <td><span class="score h">상</span> 비어 있는 시장</td>
+      <td><span class="score h">상</span> 비어 있는 시장</td>
+      <td><span class="score m">중</span> 실손 청구앱 다수</td>
+    </tr>
+    <tr>
+      <td>고객 모으는 비용</td>
+      <td><span class="score h">상</span> 법령이 수요를 만듦</td>
+      <td><span class="score m">중</span> 영업으로 가치 입증 필요</td>
+      <td><span class="score l">하</span> 인지도 광고비 큼</td>
+    </tr>
+    <tr>
+      <td>차별화 견고함<br><small class="muted">(따라하기 어려운 정도)</small></td>
+      <td><span class="score h">상</span> 보험사 연동 자산</td>
+      <td><span class="score m">중</span> 도메인 지식 재사용</td>
+      <td><span class="score m">중</span> 가입자 모일수록 강화</td>
+    </tr>
+    <tr>
+      <td>이탈 방지 효과</td>
+      <td><span class="score h">상</span> 종결 건의 법적 기록 누적</td>
+      <td><span class="score m">중</span> 업무 흐름이 굳어짐</td>
+      <td><span class="score l">하</span> 일회성 매칭</td>
+    </tr>
+    <tr>
+      <td>다음 단계로의 확장성</td>
+      <td><span class="score h">상</span> 종결 데이터 → 피해자·업무</td>
+      <td><span class="score m">중</span> 업무 → 피해자 화면</td>
+      <td><span class="score l">하</span> 매칭 → 업무 도구 역방향</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout ok">
+  <h4>결론 — A안이 유일한 진입점</h4>
+  <p>A안은 모든 축에서 우위 또는 동등하다. 특히 <strong>법령이 광고비를 0에 수렴시키고</strong>, 종결된 사건의 기록을 보관한 어플은 다음 단계(B·C)로 확장할 때 <strong>이미 사정사·피해자·보험사 셋이 한 번 만난 상태</strong>를 자산으로 갖는다. B·C는 같은 무대 위에 다음 막으로 올린다.</p>
+</div>
+
+<h2>3. 권고 — 쐐기처럼 단계 누적</h2>
+
+<p>세 안을 순서대로 쌓는다. 각 단계의 결과물이 다음 단계의 입력이 된다.</p>
+
+<div class="tl">
+  <ul>
+    <li><span class="d">1단계 (6개월)</span><span class="t">법령 의무 자동화 어플 — 손해사정서 자동 작성 + 교부 기록</span></li>
+    <li><span class="d">2단계 (+6개월)</span><span class="t">피해자 진행상황 화면 — 단계 시각화 + 안분/과실 자동 계산 + 표준 보수표</span></li>
+    <li><span class="d">3단계 (+6개월)</span><span class="t">업무 자동화 확장 — 보고서 표준 양식 · 의료자문 코칭 · 인증 사정사 커뮤니티</span></li>
+    <li><span class="d">유보</span><span class="t">보험내역 연계 (신용정보원 등) — [[project_adjuster_app]] 유보 결정 준수</span></li>
+  </ul>
+</div>
+
+<h3>첫 출시판 한 줄 정의</h3>
+
+<div class="callout">
+  <p><strong>"종결 버튼을 누르면, 손해사정서가 표준 양식대로 자동 작성되고, 피해자가 전자로 확인 사인을 하고, 보험사에 '교부했음' 기록이 자동으로 송부되는 하나의 흐름."</strong></p>
+  <p>이 흐름 하나만 동작해도 사정사는 종결 1건당 작성·발송·기록 보관 시간을 <strong>수십 분에서 분 단위로</strong> 줄일 수 있다. 위반 위험도 거의 사라진다. 다른 기능이 없어도 사정사 한 명이 "이거 하나 때문에" 쓰는 도구가 된다.</p>
+</div>
+
+<h2>4. 1·2·3단계 상세 계획</h2>
+
+<div class="phase">
+  <div class="head">
+    <span class="pname">1단계</span>
+    <h3>법령 의무 자동화 어플 — 손해사정서 자동 작성 + 교부 기록</h3>
+    <span class="when">출시 목표 2026년 4분기 (시행령 2026.1.1 도래 대응)</span>
+  </div>
+  <dl>
+    <dt>해결 페인</dt><dd>P1 손해사정서 의무 교부 · P11 민감정보 처리 의무</dd>
+    <dt>핵심 기능</dt><dd>
+      <ul>
+        <li>표준 양식(동부 양식 등) 기반 손해사정서 자동 작성기 — 총괄표·계약사항·사고경위·배상책임 검토·손해액 산정 항목을 모듈로 분해</li>
+        <li>피해자 전자 확인 흐름 — "동의합니다" 누르면 정자체 사인이 지정된 위치에 자동 기입</li>
+        <li>보험사 교부 기록 보관 — 발송·열람·확인 시각 기록 + 다운로드 가능한 PDF 증빙</li>
+        <li>민감정보 처리 기반 — 의료기록 암호화, 접근 기록 보관, 표준 동의서</li>
+      </ul>
+    </dd>
+    <dt>측정 지표</dt><dd>유료 사정사 30명 · 종결 처리 시간 50% 단축 · 미교부 위반 0건</dd>
+    <dt>가격</dt><dd>사정사 1인당 월 정액 — 초기 무료 시범 운영 후 유료 전환</dd>
+    <dt>의존성</dt><dd>보험사 교부 기록 채널 — 협회/회신 양식을 표준으로 확인. 막힐 경우 PDF + 이메일 + 수신 확인 메일 흐름으로 대체.</dd>
+  </dl>
+</div>
+
+<div class="phase">
+  <div class="head">
+    <span class="pname">2단계</span>
+    <h3>피해자 진행상황 화면 — 단계 시각화 + 안분/과실 자동 계산 + 표준 보수표</h3>
+    <span class="when">출시 목표 2027년 2분기</span>
+  </div>
+  <dl>
+    <dt>해결 페인</dt><dd>P2 진행상황 안내 부재 · P4 중복보험 안분 · P5 과실 분담 · P13 수임료 협상</dd>
+    <dt>핵심 기능</dt><dd>
+      <ul>
+        <li>사건 단계 시각화 — 현장조사 / 법률자문 / 의료자문 / 손해액 검토 / 추가 조사 / 손해사정서 작성 / 보험사 결재 / 종결 예정 (사정사가 체크하면 피해자 화면에 자동 반영)</li>
+        <li>중복보험 안분 자동 계산기 — 증권 / 자기부담금 입력 → 독립책임액 비율 계산 → 안분식 그림으로 표시</li>
+        <li>과실 분담 자동 시뮬레이션 — 피보험자/피해자/공동불법행위자 과실 입력 → 차감 순서를 차트로 보여주고 공동불법행위자에 대한 추가 청구 방법 안내</li>
+        <li>표준 보수표 + 전자 위임 동의서 — 손해액 구간별 정액, 보험사 부담 명시</li>
+        <li>예상 보험금 사전 안내 — 종결 직전 미리 보여 분쟁 발생 줄임</li>
+      </ul>
+    </dd>
+    <dt>측정 지표</dt><dd>피해자 만족도 · 분쟁민원 발생률(업계 평균 대비) · 수임료 협상 발생 비율</dd>
+    <dt>전제</dt><dd>1단계의 사정사 가입자 100명 이상 · 종결 사건 누적 1,000건 이상</dd>
+  </dl>
+</div>
+
+<div class="phase">
+  <div class="head">
+    <span class="pname">3단계</span>
+    <h3>업무 자동화 확장 + 시장 키우기</h3>
+    <span class="when">출시 목표 2027년 4분기</span>
+  </div>
+  <dl>
+    <dt>해결 페인</dt><dd>P3 종이 서류 · P6 보고서 부담 · P7 단타 소액 · P8 의료자문 · P12 영업 · P14 커뮤니티 · P9 인지도</dd>
+    <dt>핵심 기능</dt><dd>
+      <ul>
+        <li>현장·중간·종결 보고서 표준 양식 — 단계가 진행될 때마다 이전 입력 자동 반영. 별첨1·2 보고서 사례를 그대로 양식화.</li>
+        <li>전자 서류 — 청구 5종 / 입증 9종 / 종결 7종을 항목별로 사정사가 체크하면 피해자 화면에 첨부 버튼 + 사인 자동 기입</li>
+        <li>의료자문 코칭 — 사고 유형·진단명·기왕증을 입력하면 자문 결과 분포 예측</li>
+        <li>위자료 자동 산정기 — 단타 소액 사건의 회전율 개선</li>
+        <li>지도 기반 사정사 사무실 노출 + 사고 유형 매칭 — 피해자 유입 채널</li>
+        <li>인증 사정사 전용 폐쇄형 커뮤니티 — 주간 사례 문제 풀이</li>
+        <li>직접선임권 인지도 형성 — 사고 유형 입력 → 적용 가능 여부 자동 판정</li>
+      </ul>
+    </dd>
+    <dt>측정 지표</dt><dd>건당 보수 회복 (20만 → 25만원 이상) · 사정사 처리 회전율 2배 · 직접선임권 신규 매칭 월 100건</dd>
+  </dl>
+</div>
+
+<h3>법령 일정에 맞춘 출시 타임라인</h3>
+
+<div class="tl">
+  <ul>
+    <li><span class="d">2024.8.7</span><span class="t">직접선임권 동의기준 + 손해사정서 의무 교부 시행 (이미 도래)</span></li>
+    <li><span class="d">2025.10.28</span><span class="t">보험업감독업무시행세칙 시행 (이미 도래)</span></li>
+    <li><span class="d">2026.1.1</span><span class="t">보험업법 시행령 일부개정안 시행 — 1단계 출시 타이밍을 여기에 맞춤</span></li>
+    <li><span class="d">2026년 4분기</span><span class="t">1단계 (법령 의무 자동화) — 시행 직후 사정사 부담이 최고조인 시점</span></li>
+    <li><span class="d">2027년 2분기</span><span class="t">2단계 (피해자 진행상황 화면) — 분쟁민원 감소를 가치로 입증</span></li>
+    <li><span class="d">2027년 4분기</span><span class="t">3단계 (업무 자동화 + 시장 확장)</span></li>
+  </ul>
+</div>
+
+<h2>5. 경쟁자와의 차이</h2>
+
+<p>경쟁자가 다가오기 어려운 자리를 명확히 짚는다.</p>
+
+<table class="mx">
+  <thead>
+    <tr>
+      <th>축</th>
+      <th>본 어플</th>
+      <th>실손 청구앱 (보맵·실손24 등)</th>
+      <th>보험사 내부 사정 도구</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>주 사용자</td>
+      <td>독립손해사정사</td>
+      <td>피해자 본인</td>
+      <td>보험사 내부 사정사</td>
+    </tr>
+    <tr>
+      <td>대상 보험</td>
+      <td>배상책임 6종 + 직접선임권 트랙</td>
+      <td>실손 중심</td>
+      <td>전 보험</td>
+    </tr>
+    <tr>
+      <td>법적 위치</td>
+      <td>피해자 측 대리 + 법령 의무 처리</td>
+      <td>청구 편의</td>
+      <td>지급 심사</td>
+    </tr>
+    <tr>
+      <td>고유 자산</td>
+      <td>종결 기록 + 도메인 양식 + 커뮤니티</td>
+      <td>대량 청구 채널</td>
+      <td>지급 데이터</td>
+    </tr>
+    <tr>
+      <td>따라하기 어려움</td>
+      <td>도메인 + 보험사 연동 + 사정사 신뢰</td>
+      <td>화면 모방 가능</td>
+      <td>해당 없음(내부용)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>6. 위험과 대응</h2>
+
+<div class="callout bad">
+  <h4>위험 1 — 보험사 교부 기록 채널 비협조</h4>
+  <p><strong>현상</strong>: 보험사가 표준 기록 연동을 제공하지 않으면 1단계의 핵심 흐름이 막힌다.</p>
+  <p><strong>대응</strong>: 우선 PDF + 등기우편 + 수신 확인 메일 + 시각 기록의 <em>보강된 수동</em> 흐름으로 시작. 이후 협회 차원의 공통 표준을 영업·협회 경로로 추진. 어느 쪽이든 사정사가 사후에 증빙할 수 있는 기록이 더 강하다는 점을 가치로 유지.</p>
+</div>
+
+<div class="callout bad">
+  <h4>위험 2 — 사정사의 디지털 적응 저조</h4>
+  <p><strong>현상</strong>: 1인 사정사 중 다수가 종이/대면 기반. 새 도구 학습 비용을 거부할 수 있다.</p>
+  <p><strong>대응</strong>: 첫 출시판을 <em>한 흐름만</em>으로 좁혀 5분 안에 첫 종결까지 가능하게 한다. 무료 시범 운영 + 초기 사정사 30명 깊은 인터뷰. 별첨1·2의 보고서 양식을 그대로 가져와 학습 부담을 0에 가깝게.</p>
+</div>
+
+<div class="callout bad">
+  <h4>위험 3 — 직접선임권 시장 자체의 크기</h4>
+  <p><strong>현상</strong>: 이용률 0.2% + 정액 담보 제외 모범규준 때문에 시장이 좁다.</p>
+  <p><strong>대응</strong>: 1·2단계에서는 시장 크기에 기대지 않는다 (사정사 업무 흐름 + 종결 건수가 가치). 3단계의 인지도 형성으로 시장 자체를 키운다. 단기 수익은 사정사 정액과 종결 건수에 묶여 있어 시장 확장 전에도 손익분기점 도달이 가능하다.</p>
+</div>
+
+<div class="callout bad">
+  <h4>위험 4 — 보험사 측 대응(자체 도구 출시)</h4>
+  <p><strong>현상</strong>: 보험사가 자체 손해사정 도구를 사정사에게 강요할 수 있다.</p>
+  <p><strong>대응</strong>: 본 어플의 위치는 <strong>피해자 측 대리</strong>다. 보험사 위탁 트랙은 대상이 아니다 ([[project_adjuster_app]]). 보험사 도구와 사용 맥락이 달라 직접 경쟁을 피한다. 오히려 보험사 도구와의 기록 연동만 확보하면 보완 관계가 된다.</p>
+</div>
+
+<h2>7. 측정 지표</h2>
+
+<h3>최상위 지표</h3>
+
+<div class="stats">
+  <div class="stat">
+    <div class="n">월 종결 수</div>
+    <div class="lbl">어플로 종결된 사건 건수</div>
+  </div>
+  <div class="stat">
+    <div class="n">건당 시간</div>
+    <div class="lbl">사정사가 종결까지 걸린 시간 (단축 목표)</div>
+  </div>
+  <div class="stat">
+    <div class="n">분쟁률</div>
+    <div class="lbl">종결 후 분쟁민원 발생 비율 (감소 목표)</div>
+  </div>
+  <div class="stat">
+    <div class="n">위반 0건</div>
+    <div class="lbl">손해사정서 미교부 위반 건수 (0 유지)</div>
+  </div>
+</div>
+
+<h3>단계별 보조 지표</h3>
+
+<table class="mx">
+  <thead>
+    <tr>
+      <th>단계</th>
+      <th>핵심 지표</th>
+      <th>1년 목표</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1단계 · 법령 의무 자동화</td>
+      <td>유료 사정사 수 · 종결 시간 단축률 · 보험사 교부 기록 도달률</td>
+      <td>유료 30명 · 시간 -50% · 기록 도달 95% 이상</td>
+    </tr>
+    <tr>
+      <td>2단계 · 피해자 진행상황 화면</td>
+      <td>피해자 사건당 접속 빈도 · 만족도 · 분쟁 발생률(업계 평균 대비)</td>
+      <td>접속 60% 이상 · 만족도 상위 · 분쟁률 절반</td>
+    </tr>
+    <tr>
+      <td>3단계 · 업무 자동화 + 인지도</td>
+      <td>건당 보수 회복 · 사정사 회전율 · 직접선임권 신규 매칭</td>
+      <td>보수 20→25만원 · 회전 2배 · 월 100건</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>8. 다음에 할 일</h2>
+
+<ol>
+  <li><strong>스펙 작성</strong> — <code>spec/</code> 폴더에 1단계 첫 출시판 스펙 초안. 손해사정서 자동 작성 흐름·전자 확인 시퀀스·교부 기록 데이터 구조 정의. [[feedback_spec_driven]] 원칙.</li>
+  <li><strong>도메인 인터뷰</strong> — 별첨1·2 보고서 작성자 또는 동급 사정사 3~5인. 표준 양식의 차이와 교부 기록 채널 현실 확인.</li>
+  <li><strong>법령 재확인</strong> — 보험업법 제185조, 시행세칙, 시행령 일부개정안의 최신 문구를 현 시점 기준으로 다시 확인.</li>
+  <li><strong>표준 양식 수집</strong> — 동부 양식 등 주요 보험사 손해사정서 양식 1~2종 확보. PDF/DOCX 형태.</li>
+  <li><strong>기술 스택 결정 확인</strong> — Spring Boot + Next.js + MySQL ([[project_adjuster_app]]) 위에 OCR · 전자서명 · 암호화 컴포넌트 선택.</li>
+  <li><strong>본 보고서 색인 등록</strong> — <code>CLAUDE.md</code>와 <code>docs/README.md</code>가 복원되는 시점에 본 문서를 색인에 추가 ([[feedback_doc_indexing]]).</li>
+</ol>
+
+<hr />
+
+<footer>
+  <p>본 보고서는 <code>docs/painpoints.html</code>(페인포인트 상위 15개)을 입력으로 진입 각도·첫 출시판·단계별 계획·측정 지표를 도출했다. 통계와 법령 인용은 페인포인트 문서의 1차 출처에 의존한다. 결정 사항은 <code>spec/</code> 작성 시 단일 진실 원천으로 이관해야 하며, 본 문서는 의사결정 근거 자료로 보존한다.</p>
+</footer>
+
+</div>
+</body>
+</html>

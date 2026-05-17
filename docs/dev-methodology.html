@@ -1,0 +1,1020 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>개발 방법론 — tmux 기반 AI 에이전트 회사로 손해사정사 어플 구축</title>
+<style>
+  :root {
+    --ink: #111418;
+    --ink-2: #2b303a;
+    --mute: #6b7280;
+    --line: #e5e7eb;
+    --line-2: #d1d5db;
+    --bg: #fafaf7;
+    --card: #ffffff;
+    --accent: #1f3a8a;
+    --accent-soft: #eef2ff;
+    --warn: #b45309;
+    --warn-soft: #fff7ed;
+    --ok: #166534;
+    --ok-soft: #ecfdf5;
+    --bad: #b91c1c;
+    --bad-soft: #fef2f2;
+    --code-bg: #f3f4f6;
+    --rad: 6px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+  body {
+    font-family: "Pretendard", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-size: 15.5px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 56px 28px 96px; }
+  h1, h2, h3, h4 { color: var(--ink); letter-spacing: -0.01em; }
+  h1 { font-size: 30px; margin: 0 0 8px; line-height: 1.3; }
+  h2 { font-size: 22px; margin: 56px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 17px; margin: 28px 0 10px; }
+  h4 { font-size: 15px; margin: 18px 0 6px; color: var(--ink-2); }
+  p { margin: 8px 0 12px; }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+  a:hover { border-bottom-color: var(--accent); }
+  ul, ol { margin: 8px 0 14px; padding-left: 22px; }
+  li { margin: 4px 0; }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-size: 0.9em; font-family: "JetBrains Mono", Consolas, monospace; }
+  pre {
+    background: var(--code-bg);
+    padding: 14px 16px;
+    border-radius: var(--rad);
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.55;
+    font-family: "JetBrains Mono", Consolas, monospace;
+    margin: 12px 0;
+  }
+  pre code { background: none; padding: 0; }
+  small, .muted { color: var(--mute); font-size: 13px; }
+
+  .meta {
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: var(--rad);
+    padding: 18px 22px;
+    margin: 24px 0 32px;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 6px 18px;
+    font-size: 13.5px;
+  }
+  .meta dt { color: var(--mute); font-weight: 500; }
+  .meta dd { margin: 0; }
+
+  .toc {
+    border-left: 3px solid var(--accent);
+    background: var(--card);
+    padding: 14px 20px;
+    margin: 24px 0 40px;
+    border-radius: 0 var(--rad) var(--rad) 0;
+  }
+  .toc ol { margin: 4px 0; padding-left: 22px; font-size: 14.5px; }
+  .toc li { margin: 3px 0; }
+  .toc strong { color: var(--ink); }
+
+  .callout {
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    background: var(--card);
+    border-radius: var(--rad);
+    padding: 14px 18px;
+    margin: 14px 0 22px;
+  }
+  .callout.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+  .callout.ok { border-left-color: var(--ok); background: var(--ok-soft); }
+  .callout.bad { border-left-color: var(--bad); background: var(--bad-soft); }
+  .callout h4 { margin-top: 0; }
+
+  /* Org chart */
+  .org {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--rad);
+    padding: 22px;
+    margin: 18px 0 28px;
+  }
+  .org .level {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 14px 0;
+  }
+  .org .node {
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: var(--rad);
+    padding: 10px 14px;
+    min-width: 130px;
+    text-align: center;
+    font-size: 13px;
+  }
+  .org .node.boss { border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+  .org .node .role { color: var(--accent); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .org .node .name { color: var(--ink-2); margin-top: 2px; }
+  .org .connector {
+    text-align: center;
+    color: var(--line-2);
+    font-size: 22px;
+    line-height: 1;
+    margin: -4px 0;
+  }
+
+  /* Pattern card */
+  .pattern {
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: var(--rad);
+    padding: 18px 22px;
+    margin: 14px 0;
+  }
+  .pattern h3 {
+    margin-top: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .pattern .pnum {
+    background: var(--accent);
+    color: #fff;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .pattern dl {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 6px 14px;
+    margin: 12px 0 4px;
+    font-size: 14px;
+  }
+  .pattern dt { color: var(--mute); font-weight: 500; }
+  .pattern dd { margin: 0; }
+
+  /* tmux layout visualization */
+  .tmux-layout {
+    background: #0f1419;
+    border-radius: var(--rad);
+    padding: 18px;
+    margin: 14px 0 22px;
+    font-family: "JetBrains Mono", Consolas, monospace;
+    font-size: 12px;
+    color: #e6e6e6;
+  }
+  .tmux-layout .bar {
+    background: #1f2937;
+    color: #93c5fd;
+    padding: 4px 10px;
+    border-radius: 4px 4px 0 0;
+    font-size: 11px;
+  }
+  .tmux-layout .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .tmux-layout .pane {
+    background: #1a1f2e;
+    border: 1px solid #2a3142;
+    border-radius: 4px;
+    padding: 10px;
+    min-height: 90px;
+  }
+  .tmux-layout .pane .title {
+    color: #fbbf24;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .tmux-layout .pane .body {
+    color: #d4d4d8;
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+  .tmux-layout .pane .prompt { color: #34d399; }
+  .tmux-layout .pane.boss { border-color: #f59e0b; }
+  .tmux-layout .status {
+    background: #1f2937;
+    color: #94a3b8;
+    padding: 4px 10px;
+    margin-top: 6px;
+    border-radius: 0 0 4px 4px;
+    font-size: 11px;
+  }
+
+  /* Step */
+  .step {
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: var(--rad);
+    padding: 20px 22px;
+    margin: 16px 0;
+  }
+  .step .head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .step .sname {
+    background: var(--accent);
+    color: #fff;
+    padding: 3px 11px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .step h3 { margin: 0; font-size: 17px; }
+  .step .when { color: var(--mute); font-size: 13px; }
+  .step dl {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 6px 14px;
+    margin: 12px 0 4px;
+    font-size: 14px;
+  }
+  .step dt { color: var(--mute); font-weight: 500; }
+  .step dd { margin: 0; }
+
+  table.mx {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0 28px;
+    font-size: 13.5px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--rad);
+    overflow: hidden;
+  }
+  table.mx th, table.mx td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  table.mx th {
+    background: #f3f4f6;
+    font-weight: 600;
+    font-size: 12.5px;
+    color: var(--ink-2);
+  }
+  table.mx tr:last-child td { border-bottom: none; }
+
+  /* Loop diagram */
+  .loop {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--rad);
+    padding: 22px;
+    margin: 18px 0 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .loop .stage {
+    border: 1px solid var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 10px 16px;
+    border-radius: var(--rad);
+    font-size: 13px;
+    font-weight: 600;
+    min-width: 100px;
+    text-align: center;
+  }
+  .loop .arrow {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 18px;
+  }
+
+  .tag { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 500; }
+  .tag.role { background: #eef2ff; color: #1e40af; }
+  .tag.tool { background: #f0fdf4; color: #166534; }
+  .tag.cmd { background: #fef3c7; color: #92400e; }
+
+  .src {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--rad);
+    padding: 16px 22px;
+    margin: 18px 0;
+    font-size: 13.5px;
+  }
+  .src h4 { margin-top: 0; }
+  .src ul { padding-left: 18px; }
+
+  footer {
+    margin-top: 72px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    color: var(--mute);
+    font-size: 12.5px;
+  }
+  hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="muted" style="margin:0 0 6px; letter-spacing:0.04em; text-transform:uppercase; font-size:12px;">개발 방법론 제안</p>
+  <h1>tmux로 운영하는 AI 에이전트 회사 — 손해사정사 어플 구축 방식</h1>
+  <p class="muted">"무엇을 만들지"가 아니라 "어떻게 만들지". 1인 개발자가 tmux 위에 다중 AI 에이전트를 띄워 사실상 한 팀처럼 운영하는 방법론 제안서.</p>
+</header>
+
+<dl class="meta">
+  <dt>대상</dt><dd>본 프로젝트의 개발 운영 방식 — 1단계 첫 출시판부터 적용</dd>
+  <dt>전제</dt><dd>1인 개발자(사용자) + 다수의 AI 코딩 에이전트. 사용자는 감독자(Supervisor / CEO) 역할.</dd>
+  <dt>핵심 도구</dt><dd>tmux, git worktrees, Claude Code(하위 에이전트), 랠프 루프(Ralph Loop), 멀티 에이전트 오케스트레이터</dd>
+  <dt>출처</dt><dd>2026년 발표된 tmux 멀티 에이전트 운영 자료 + 사례 + 도구 평가. 11장 참조.</dd>
+  <dt>작성일</dt><dd>2026-05-17</dd>
+</dl>
+
+<div class="callout">
+  <h4>한 줄 결론</h4>
+  <p>tmux를 "AI 에이전트 회사의 운영체제"로 사용한다. 사용자는 <strong>감독자(CEO/오너) 패널 1개</strong>를 점유하고, <strong>역할별 에이전트(PM·아키텍트·백엔드·프론트엔드·QA·DevOps·보안)를 각자의 패널에 띄운다</strong>. 각 에이전트는 <strong>자기 전용 git 워크트리(작업 분기)</strong>에서 일하고, 작업이 끝나면 PR을 올려 감독자 검토를 받는다. 사용자는 <code>send-keys</code>로 지시하고 <code>capture-pane</code>으로 상태를 본다. 야간·장시간 작업은 <strong>랠프 루프</strong>로 자율 반복.</p>
+  <p>왜 tmux인가. 프로세스 격리·세션 영속성·실시간 출력·원격 접속이라는 tmux의 본래 특성이 AI 에이전트 오케스트레이션이 필요로 하는 속성과 그대로 일치한다. 별도 플랫폼을 만들 필요 없이 2007년부터 존재한 도구가 이미 정답이다.</p>
+</div>
+
+<nav class="toc">
+  <strong>목차</strong>
+  <ol>
+    <li>왜 tmux + 멀티 AI 에이전트인가</li>
+    <li>업계 패턴 6가지</li>
+    <li>AI 에이전트 회사 조직도</li>
+    <li>tmux 레이아웃과 워크트리 흐름</li>
+    <li>핵심 워크플로 — PM → SWE → QA 루프</li>
+    <li>랠프 루프(Ralph Loop) 통합 — 야간 자율 개발</li>
+    <li>도구 후보 비교</li>
+    <li>우리 프로젝트 권고 셋업</li>
+    <li>도입 3단계 — 걷고, 뛰고, 날기</li>
+    <li>안티패턴</li>
+    <li>출처</li>
+  </ol>
+</nav>
+
+<h2>1. 왜 tmux + 멀티 AI 에이전트인가</h2>
+
+<p>tmux의 본래 특성이 AI 에이전트 운영의 요구와 정확히 일치한다.</p>
+
+<table class="mx">
+  <thead>
+    <tr>
+      <th>tmux 본래 특성</th>
+      <th>AI 에이전트 운영에서의 의미</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>패널 격리</td>
+      <td>각 에이전트가 다른 에이전트의 출력에 간섭하지 않음. 한 명이 죽어도 다른 사람 일은 계속됨.</td>
+    </tr>
+    <tr>
+      <td>세션 영속성</td>
+      <td>터미널을 닫아도 에이전트들이 계속 일함. 다음 날 다시 붙으면 그대로 이어 일하고 있음.</td>
+    </tr>
+    <tr>
+      <td>실시간 출력</td>
+      <td>감독자가 어느 에이전트가 무엇을 하고 있는지 한눈에 봄.</td>
+    </tr>
+    <tr>
+      <td>send-keys / capture-pane</td>
+      <td>에이전트 사이 통신 메커니즘 그대로 사용 가능. 감독자가 "타이핑해 주는 사람"처럼 지시 전달.</td>
+    </tr>
+    <tr>
+      <td>원격 접속(SSH)</td>
+      <td>외부에서 같은 세션에 붙어 상태 확인. 모바일에서 진행 상황 모니터링 가능.</td>
+    </tr>
+    <tr>
+      <td>스크립트화</td>
+      <td>레이아웃·시작 명령·역할 부여를 한 줄 스크립트로 재현. 회사 셋업을 코드로 관리.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout ok">
+  <h4>현실적 규모</h4>
+  <p>실무 사례 기준 <strong>3~5명으로 시작해 10~20명까지 확장</strong>이 일반적이다. 16GB RAM 맥에서 20명 동시 가동 무리 없음. 그러나 <strong>현실 제약은 메모리가 아니라 검토 대역폭</strong>이다. 한 사람이 동시에 검토할 수 있는 병렬 PR은 5~8개가 한계. 처음에는 3~5명으로 좁히는 것을 권장.</p>
+</div>
+
+<h2>2. 업계 패턴 6가지</h2>
+
+<div class="pattern">
+  <h3><span class="pnum">1</span> 감독자–작업자 계층(Supervisor–Worker)</h3>
+  <dl>
+    <dt>핵심</dt><dd>최상위 감독자가 작업을 분해해 작업자 에이전트에게 분배한다. 사무라이 비유로 "쇼군 → 카로 → 아시가루" 같은 3단 계층도 사례에 있다.</dd>
+    <dt>왜 필요</dt><dd>한 에이전트가 모든 결정을 내리면 컨텍스트 창이 터지고, 책임이 흐려진다. 계층화는 책임 경계를 명확히 한다.</dd>
+    <dt>우리 적용</dt><dd>감독자(사용자) → PM(스펙 작성·검수) → SWE(구현) + QA(검증) 구조. 필요 시 아키텍트를 별도 계층으로 분리.</dd>
+  </dl>
+</div>
+
+<div class="pattern">
+  <h3><span class="pnum">2</span> 워크트리 격리(Worktree Isolation)</h3>
+  <dl>
+    <dt>핵심</dt><dd>git worktree는 하나의 저장소에 여러 작업 디렉터리를 만들어 각자 다른 브랜치에서 동시에 작업하게 한다. 에이전트별로 워크트리 하나·브랜치 하나·PR 하나.</dd>
+    <dt>왜 필요</dt><dd>같은 디렉터리에서 두 에이전트가 동시에 파일을 수정하면 충돌·덮어쓰기·꼬임이 생긴다. 워크트리는 디스크 수준에서 분리한다.</dd>
+    <dt>우리 적용</dt><dd><code>main</code> 외에 <code>backend/feat-pdf-generator</code>, <code>frontend/feat-sign-flow</code>, <code>qa/integration-tests</code> 같은 워크트리를 동시에 띄움.</dd>
+  </dl>
+</div>
+
+<div class="pattern">
+  <h3><span class="pnum">3</span> 역할 기반 에이전트(Role-Based Agents)</h3>
+  <dl>
+    <dt>핵심</dt><dd>PM·아키텍트·백엔드·프론트엔드·QA·DevOps·보안 등 역할별로 별도 에이전트. 각 에이전트는 자기 시스템 프롬프트(역할 설명·금지 행동·도구 제한)를 가짐.</dd>
+    <dt>왜 필요</dt><dd>"만능 에이전트"는 결정이 느리고 출력 품질이 평균값에 가깝다. 역할로 좁히면 깊이가 생긴다.</dd>
+    <dt>우리 적용</dt><dd>역할별 시스템 프롬프트를 <code>.claude/agents/</code> 또는 동등 위치에 저장. 우리 도메인 용어집과 법령 발췌본을 보안·PM 에이전트에 주입.</dd>
+  </dl>
+</div>
+
+<div class="pattern">
+  <h3><span class="pnum">4</span> 감독 루프(PM → SWE → QA → PM)</h3>
+  <dl>
+    <dt>핵심</dt><dd>PM이 작업을 명세화 → SWE가 구현 → QA가 인수 기준 통과 여부 검증 → PM이 사용자 관점에서 최종 검수. 통과 못하면 다시 SWE로.</dd>
+    <dt>왜 필요</dt><dd>한 에이전트가 자기 코드를 자기가 검증하면 "다 됐다"가 거짓일 가능성이 높다. 역할이 다른 에이전트가 검증해야 신뢰가 생긴다.</dd>
+    <dt>우리 적용</dt><dd>PR이 열리면 자동으로 QA 에이전트가 인수 시나리오 실행. 통과 후 PM 에이전트가 스펙 정합성 검토. 둘 다 통과해야 감독자에게 알림.</dd>
+  </dl>
+</div>
+
+<div class="pattern">
+  <h3><span class="pnum">5</span> 랠프 루프(Ralph Loop) — 자율 반복</h3>
+  <dl>
+    <dt>핵심</dt><dd>"제품 요구 문서(PRD)의 모든 항목이 완료될 때까지" 매 반복마다 <em>새 컨텍스트</em>로 에이전트를 다시 띄워 다음 항목을 처리한다. 진행 상태는 파일과 git 이력에 남기고, LLM 컨텍스트에는 남기지 않는다.</dd>
+    <dt>왜 필요</dt><dd>긴 작업에서 컨텍스트 창이 가득 차는 문제를 해결. 사용자가 잠든 사이에도 작업이 진행됨.</dd>
+    <dt>우리 적용</dt><dd>1단계 첫 출시판의 인수 시나리오 30~50개를 PRD로 작성 → 랠프 루프가 야간에 하나씩 통과시킴 → 아침에 통과 결과 검토.</dd>
+  </dl>
+</div>
+
+<div class="pattern">
+  <h3><span class="pnum">6</span> 패널 간 통신 — send-keys와 capture-pane</h3>
+  <dl>
+    <dt>핵심</dt><dd><code>tmux send-keys</code>는 다른 패널의 입력창에 "사람이 친 것처럼" 텍스트를 주입한다. <code>tmux capture-pane</code>은 다른 패널의 화면을 캡처해 읽는다. 이 두 명령만으로 에이전트 사이 통신이 가능하다.</dd>
+    <dt>왜 필요</dt><dd>별도의 메시지 큐·API 없이도 에이전트들이 협업할 수 있다. 가장 단순하고 깨지지 않는 통신 방식.</dd>
+    <dt>우리 적용</dt><dd>감독자 스크립트가 "QA야, 이 PR 검증해 줘"를 QA 패널에 <code>send-keys</code>로 주입. 결과가 화면에 나오면 <code>capture-pane</code>으로 읽어 다음 단계로 넘김.</dd>
+  </dl>
+</div>
+
+<h2>3. AI 에이전트 회사 조직도</h2>
+
+<p>1단계 첫 출시판 기준, 다음과 같은 회사 구조를 제안한다.</p>
+
+<div class="org">
+  <div class="level">
+    <div class="node boss">
+      <div class="role">감독자 / CEO</div>
+      <div class="name">사용자 본인</div>
+    </div>
+  </div>
+  <div class="connector">↓</div>
+  <div class="level">
+    <div class="node">
+      <div class="role">PM</div>
+      <div class="name">스펙·인수 시나리오</div>
+    </div>
+    <div class="node">
+      <div class="role">Architect</div>
+      <div class="name">아키텍처·RFC 검토</div>
+    </div>
+  </div>
+  <div class="connector">↓</div>
+  <div class="level">
+    <div class="node">
+      <div class="role">Backend</div>
+      <div class="name">Spring Boot · API · DB</div>
+    </div>
+    <div class="node">
+      <div class="role">Frontend</div>
+      <div class="name">Next.js · UI · 전자서명</div>
+    </div>
+    <div class="node">
+      <div class="role">Compliance</div>
+      <div class="name">법령·민감정보·암호화</div>
+    </div>
+  </div>
+  <div class="connector">↓</div>
+  <div class="level">
+    <div class="node">
+      <div class="role">QA</div>
+      <div class="name">인수 테스트·회귀</div>
+    </div>
+    <div class="node">
+      <div class="role">DevOps</div>
+      <div class="name">CI·배포·모니터링</div>
+    </div>
+  </div>
+</div>
+
+<p>총 7명. 처음에는 PM·Backend·Frontend·QA의 4명만 띄우고, 안정화 후 Architect·Compliance·DevOps를 추가하는 것을 권장.</p>
+
+<h3>역할별 시스템 프롬프트 핵심</h3>
+
+<table class="mx">
+  <thead>
+    <tr>
+      <th>역할</th>
+      <th>책임</th>
+      <th>금지/제한</th>
+      <th>주입 컨텍스트</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="tag role">PM</span></td>
+      <td>스펙 작성, 인수 시나리오 도출, 사용자 관점 최종 검수</td>
+      <td>코드 작성 금지. 스펙만 수정 가능.</td>
+      <td>도메인 용어집, painpoints.html, service-direction.html</td>
+    </tr>
+    <tr>
+      <td><span class="tag role">Architect</span></td>
+      <td>RFC 검토, 의존성 매핑, 큰 결정 의견</td>
+      <td>로컬 구현 직접 안 함. 결정 문서만 작성.</td>
+      <td>RFC, 시스템 도식, 외부 의존 목록</td>
+    </tr>
+    <tr>
+      <td><span class="tag role">Backend</span></td>
+      <td>Spring Boot API·서비스·DB 스키마 구현</td>
+      <td>프론트엔드 코드 수정 금지. 보안·암호화는 Compliance 협의.</td>
+      <td>스펙, 도메인 모델, MySQL 스키마</td>
+    </tr>
+    <tr>
+      <td><span class="tag role">Frontend</span></td>
+      <td>Next.js 화면·전자서명·피해자 확인 흐름</td>
+      <td>백엔드 코드 수정 금지. API 변경은 Backend에 PR로 요청.</td>
+      <td>스펙, 화면 와이어, 사인 동작 명세</td>
+    </tr>
+    <tr>
+      <td><span class="tag role">Compliance</span></td>
+      <td>민감정보 처리·암호화·법령 정합성 검사</td>
+      <td>기능 추가 금지. 보안·법령 위반 지적과 수정 PR만.</td>
+      <td>보험업법 제185조, 개인정보보호법 제23조, 시행세칙</td>
+    </tr>
+    <tr>
+      <td><span class="tag role">QA</span></td>
+      <td>인수 시나리오 실행, 회귀 테스트, 통과/실패 보고</td>
+      <td>스펙 변경 금지. 테스트만 추가 가능.</td>
+      <td>스펙, 인수 시나리오, 별첨1·2 사례 데이터</td>
+    </tr>
+    <tr>
+      <td><span class="tag role">DevOps</span></td>
+      <td>CI 워크플로, 배포 파이프라인, 모니터링 설정</td>
+      <td>비즈니스 로직 수정 금지. 인프라만.</td>
+      <td>Dockerfile, GitHub Actions, 배포 환경 변수</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>4. tmux 레이아웃과 워크트리 흐름</h2>
+
+<h3>표준 레이아웃 — 1세션 다패널</h3>
+
+<div class="tmux-layout">
+  <div class="bar">tmux session: adjuster-coop</div>
+  <div class="grid">
+    <div class="pane boss">
+      <div class="title">CEO (사용자)</div>
+      <div class="body">
+        <span class="prompt">$</span> 감독 스크립트<br/>
+        <span class="prompt">$</span> PR 검토<br/>
+        <span class="prompt">$</span> 지시 send-keys
+      </div>
+    </div>
+    <div class="pane">
+      <div class="title">PM</div>
+      <div class="body">
+        <span class="prompt">~$</span> spec/ 작성 중<br/>
+        AC #12 작성<br/>
+        AC #13 작성
+      </div>
+    </div>
+    <div class="pane">
+      <div class="title">Architect</div>
+      <div class="body">
+        <span class="prompt">~$</span> RFC 리뷰<br/>
+        PDF 라이브러리 결정<br/>
+        대안 3개 비교
+      </div>
+    </div>
+    <div class="pane">
+      <div class="title">Backend</div>
+      <div class="body">
+        worktree: feat-pdf<br/>
+        <span class="prompt">~$</span> Spring Boot 구현<br/>
+        PdfService.kt
+      </div>
+    </div>
+    <div class="pane">
+      <div class="title">Frontend</div>
+      <div class="body">
+        worktree: feat-sign<br/>
+        <span class="prompt">~$</span> Next.js 화면<br/>
+        SignPage.tsx
+      </div>
+    </div>
+    <div class="pane">
+      <div class="title">QA</div>
+      <div class="body">
+        worktree: qa<br/>
+        <span class="prompt">~$</span> 인수 시나리오 #5<br/>
+        실행 중...
+      </div>
+    </div>
+  </div>
+  <div class="status">CEO • PM • Architect • Backend • Frontend • QA &nbsp;|&nbsp; 6 panes &nbsp;|&nbsp; uptime 04:17</div>
+</div>
+
+<h3>워크트리 디스크 구조</h3>
+
+<pre><code>~/IdeaProjects/Adjuster-system/         # 메인 저장소 (main 브랜치)
+~/work/adjuster-pm/                     # PM 에이전트 (spec/ 작성)
+~/work/adjuster-backend-pdf/            # Backend, feat-pdf-generator 브랜치
+~/work/adjuster-frontend-sign/          # Frontend, feat-sign-flow 브랜치
+~/work/adjuster-qa/                     # QA, qa/integration-tests 브랜치
+~/work/adjuster-compliance/             # Compliance, audit/...</code></pre>
+
+<p>각 워크트리는 같은 저장소를 공유하므로 <code>git fetch</code> 한 번이면 다른 에이전트의 변경 사항을 가져올 수 있다. 작업이 끝나면 PR로 main에 합친다.</p>
+
+<h3>tmux 셋업 명령 예시</h3>
+
+<pre><code># 새 세션
+tmux new-session -d -s adjuster-coop -n main
+
+# CEO 패널은 첫 패널 그대로
+
+# PM 패널
+tmux split-window -h -t adjuster-coop:main
+tmux send-keys -t adjuster-coop:main.1 \
+  "cd ~/work/adjuster-pm && claude --agent pm" C-m
+
+# Backend 패널
+tmux split-window -v -t adjuster-coop:main.1
+tmux send-keys -t adjuster-coop:main.2 \
+  "cd ~/work/adjuster-backend-pdf && claude --agent backend" C-m
+
+# (Frontend, QA, Compliance도 동일 방식)
+
+tmux attach -t adjuster-coop</code></pre>
+
+<p>실제로는 이 셋업을 <code>scripts/launch-team.sh</code>로 만들어 한 줄로 회사를 띄운다.</p>
+
+<h2>5. 핵심 워크플로 — PM → SWE → QA 루프</h2>
+
+<div class="loop">
+  <div class="stage">PM<br><small>스펙 작성</small></div>
+  <span class="arrow">→</span>
+  <div class="stage">Architect<br><small>RFC 검토</small></div>
+  <span class="arrow">→</span>
+  <div class="stage">SWE<br><small>구현 + PR</small></div>
+  <span class="arrow">→</span>
+  <div class="stage">QA<br><small>인수 시나리오</small></div>
+  <span class="arrow">→</span>
+  <div class="stage">PM<br><small>최종 검수</small></div>
+  <span class="arrow">↻</span>
+</div>
+
+<h3>한 작업의 일생</h3>
+
+<ol>
+  <li><strong>감독자가 작업 지시</strong> — "1단계 스펙 #03: 손해사정서 PDF 자동 생성을 구현"</li>
+  <li><strong>PM 에이전트가 스펙 확정</strong> — <code>spec/03-pdf-generator.md</code>에 EARS 문장과 인수 시나리오 5건 작성. <code>send-keys</code>로 감독자에게 "검토 부탁드립니다" 통지.</li>
+  <li><strong>감독자가 스펙 승인 또는 수정 요청</strong> — 감독자 패널에서 한 줄로 응답.</li>
+  <li><strong>Architect 에이전트가 RFC 짧게 검토</strong> — "PDF 라이브러리는 OpenPDF + Spring Boot 통합으로. 폰트 임베딩 주의."</li>
+  <li><strong>Backend 에이전트가 자기 워크트리에서 구현</strong> — <code>feat-pdf-generator</code> 브랜치. 완료 시 PR 생성.</li>
+  <li><strong>QA 에이전트가 PR을 자기 워크트리로 체크아웃해 인수 시나리오 실행</strong> — 통과/실패 결과를 PR 코멘트로 남김. <code>send-keys</code>로 PM에게 알림.</li>
+  <li><strong>PM 에이전트가 스펙 정합성 최종 검수</strong> — 통과면 PR 승인 의견. 실패면 <code>send-keys</code>로 Backend에 재작업 요청.</li>
+  <li><strong>감독자가 머지</strong> — 최종 결정. 머지 후 <code>scripts/sync-worktrees.sh</code>로 모든 에이전트 워크트리 동기화.</li>
+</ol>
+
+<div class="callout warn">
+  <h4>중요 원칙 — 코드는 한 에이전트씩</h4>
+  <p>여러 에이전트가 같은 파일을 동시에 수정하면 머지 충돌이 즉시 발생한다. <strong>한 워크트리 = 한 작업 = 한 PR</strong>을 엄격히 지킨다. 작업이 겹치면 PM 에이전트가 분해해 순서를 정한다.</p>
+</div>
+
+<h2>6. 랠프 루프(Ralph Loop) 통합 — 야간 자율 개발</h2>
+
+<p>장시간·반복 작업은 랠프 루프에 맡긴다. 동작 원리는 단순하다.</p>
+
+<ol>
+  <li><strong>PRD 파일에 남은 작업 목록을 기록한다</strong> — <code>docs/prd/phase-1-todo.md</code>.</li>
+  <li><strong>루프가 다음 작업을 골라 새 컨텍스트로 에이전트를 띄운다</strong>.</li>
+  <li><strong>에이전트가 작업을 완료하고 PRD를 갱신한다</strong> — "[x] AC #12 통과".</li>
+  <li><strong>QA·테스트가 자동으로 검증한다</strong>. 실패면 다음 반복에서 같은 작업 재시도.</li>
+  <li><strong>모든 PRD 항목이 [x]가 되면 루프 종료</strong>.</li>
+</ol>
+
+<p>이 환경에는 이미 <code>ralph-loop</code> 스킬이 설치돼 있다(<code>/ralph-loop</code>). 다음 형태로 호출:</p>
+
+<pre><code>/ralph-loop docs/prd/phase-1-todo.md</code></pre>
+
+<div class="callout ok">
+  <h4>잘 동작하는 조건</h4>
+  <ul>
+    <li>각 PRD 항목이 <strong>자동 검증 가능</strong>해야 함 (테스트·타입체커·린터)</li>
+    <li>각 항목의 <strong>범위가 한 작업 파일에 담길 정도로 좁아야</strong> 함</li>
+    <li><strong>신규 구현</strong>(greenfield)에 강함. 기존 코드 대규모 리팩토링은 약함</li>
+  </ul>
+  <p>따라서 1단계 첫 출시판처럼 신규로 만드는 어플에는 잘 맞는다.</p>
+</div>
+
+<h2>7. 도구 후보 비교</h2>
+
+<p>2026년 5월 기준, tmux 멀티 에이전트 오케스트레이터는 빠르게 늘고 있다. 우리 요구(1인 개발자, Claude Code 기반, 무료 또는 저비용)에 맞춰 비교한다.</p>
+
+<table class="mx">
+  <thead>
+    <tr>
+      <th>도구</th>
+      <th>특징</th>
+      <th>적합도</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="tag tool">tmux + Claude Code (수제)</span></td>
+      <td>tmux 명령과 Claude Code 하위 에이전트 + 워크트리만 조합. 외부 도구 의존 없음. 셋업 스크립트만 손수 작성.</td>
+      <td>가장 권장. 학습 비용 낮고 환경 의존성 0.</td>
+    </tr>
+    <tr>
+      <td><span class="tag tool">agentmux</span></td>
+      <td>tmux 기반 빠른 오케스트레이터. macOS·Linux·WSL. 패널 레이아웃 자동.</td>
+      <td>수제 셋업이 번거로워질 때 검토.</td>
+    </tr>
+    <tr>
+      <td><span class="tag tool">ittybitty</span></td>
+      <td>Claude 인스턴스를 tmux 가상 터미널에 자동 띄움. 한 에이전트가 다른 에이전트를 또 띄울 수 있음.</td>
+      <td>계층적 위임이 필요하면 검토.</td>
+    </tr>
+    <tr>
+      <td><span class="tag tool">CLI Agent Orchestrator (CAO)</span></td>
+      <td>AWS Labs 오픈소스. 다양한 CLI 에이전트(Claude·Codex·Gemini 등) 통합. MCP 기반 감독자-작업자.</td>
+      <td>여러 모델을 섞어 쓸 계획이면 검토.</td>
+    </tr>
+    <tr>
+      <td><span class="tag tool">Tmux-Orchestrator (absmartly)</span></td>
+      <td>tmux + Claude 에이전트 관리 오픈소스. 셋업 스크립트 다수 포함.</td>
+      <td>수제 셋업 참고용으로 가치.</td>
+    </tr>
+    <tr>
+      <td><span class="tag tool">Agent Orchestrator (Composio)</span></td>
+      <td>병렬 코딩 에이전트. 각자 워크트리·브랜치·PR. CI 실패 자동 수정·머지 충돌 처리.</td>
+      <td>여러 PR을 동시에 굴리는 단계 이후 검토.</td>
+    </tr>
+    <tr>
+      <td><span class="tag tool">ralph (snarktank)</span></td>
+      <td>자율 반복 루프 원조 구현. PRD 모두 완료될 때까지.</td>
+      <td>야간 자율 개발 도입 시 채택. 본 환경엔 <code>ralph-loop</code> 스킬로 이미 사용 가능.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <h4>1차 권고</h4>
+  <p><strong>"수제 tmux + Claude Code 하위 에이전트 + git 워크트리 + 랠프 루프"</strong> 조합으로 시작. 셋업 스크립트 한두 개만 손수 작성하면 외부 도구 의존 없이 완성된다. 운영하면서 부족함이 명확해지면 agentmux나 CAO 같은 전용 오케스트레이터로 옮긴다.</p>
+</div>
+
+<h2>8. 우리 프로젝트 권고 셋업</h2>
+
+<h3>저장소 구조</h3>
+
+<pre><code>~/IdeaProjects/Adjuster-system/      # 메인
+  ├── backend/                       # Spring Boot
+  ├── frontend/                      # Next.js
+  ├── spec/                          # EARS 스펙
+  ├── docs/                          # painpoints·service-direction·rfc·prd
+  ├── .claude/
+  │   └── agents/                    # 역할별 에이전트 정의
+  │       ├── pm.md
+  │       ├── architect.md
+  │       ├── backend.md
+  │       ├── frontend.md
+  │       ├── compliance.md
+  │       ├── qa.md
+  │       └── devops.md
+  └── scripts/
+      ├── launch-team.sh             # tmux 회사 띄우기
+      ├── sync-worktrees.sh          # 워크트리 동기화
+      └── nightly-ralph.sh           # 야간 랠프 루프 시작
+
+~/work/                              # 에이전트별 워크트리들
+  ├── adjuster-pm/
+  ├── adjuster-backend-*/
+  ├── adjuster-frontend-*/
+  └── adjuster-qa/</code></pre>
+
+<h3>운영 리듬</h3>
+
+<table class="mx">
+  <thead>
+    <tr><th>시간대</th><th>활동</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>아침</td>
+      <td>야간 랠프 루프 결과 검토 → 통과한 PR 머지 → 실패한 PR은 PM 에이전트와 함께 원인 분석</td>
+    </tr>
+    <tr>
+      <td>오전</td>
+      <td>감독자 + PM 에이전트가 다음 스펙 1~2편 확정. Architect 에이전트가 RFC 검토.</td>
+    </tr>
+    <tr>
+      <td>오후</td>
+      <td>Backend/Frontend/Compliance 에이전트가 병렬 구현. 감독자는 PR이 올라오는 대로 검토.</td>
+    </tr>
+    <tr>
+      <td>저녁</td>
+      <td>QA 에이전트가 그날의 PR을 모두 검증. PRD 파일을 다음 항목으로 갱신.</td>
+    </tr>
+    <tr>
+      <td>야간</td>
+      <td>랠프 루프 시작 → 다음 날 아침까지 자율 진행</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>9. 도입 3단계 — 걷고, 뛰고, 날기</h2>
+
+<div class="step">
+  <div class="head">
+    <span class="sname">1단계 · 걷기</span>
+    <h3>2명 회사 — 감독자 + 단일 Claude 에이전트</h3>
+    <span class="when">1~2일</span>
+  </div>
+  <dl>
+    <dt>목표</dt><dd>tmux 패널 2개로 시작. 감독자 패널 하나, Claude Code 패널 하나. <code>send-keys</code>·<code>capture-pane</code>의 감을 익힌다.</dd>
+    <dt>활동</dt><dd>
+      <ul>
+        <li>tmux 세션 셋업, 단축키 학습</li>
+        <li>Claude Code 패널에 작업 하나 시켜 끝까지 따라가 본다</li>
+        <li><code>send-keys</code>로 새 지시 주입해 보기</li>
+      </ul>
+    </dd>
+    <dt>완료 기준</dt><dd>패널 사이 통신을 명령어로 자유롭게 다룬다.</dd>
+  </dl>
+</div>
+
+<div class="step">
+  <div class="head">
+    <span class="sname">2단계 · 뛰기</span>
+    <h3>4명 회사 — PM·Backend·Frontend·QA</h3>
+    <span class="when">1주</span>
+  </div>
+  <dl>
+    <dt>목표</dt><dd>실제 PM → SWE → QA 루프를 1주일 동안 굴려 본다. 워크트리 격리 도입.</dd>
+    <dt>활동</dt><dd>
+      <ul>
+        <li>역할별 에이전트 정의 파일 <code>.claude/agents/</code> 작성</li>
+        <li><code>scripts/launch-team.sh</code>로 4명 한 번에 띄우기</li>
+        <li>스펙 1편 → 구현 → QA → 머지의 한 사이클 완주</li>
+        <li>워크트리 동기화 스크립트 작성</li>
+      </ul>
+    </dd>
+    <dt>완료 기준</dt><dd>한 PR이 감독자 개입 최소화로 PM → SWE → QA 루프를 통과해 머지된다.</dd>
+  </dl>
+</div>
+
+<div class="step">
+  <div class="head">
+    <span class="sname">3단계 · 날기</span>
+    <h3>7명 회사 + 야간 랠프 루프</h3>
+    <span class="when">상시 운영</span>
+  </div>
+  <dl>
+    <dt>목표</dt><dd>Architect·Compliance·DevOps 추가. 야간 자율 개발 시작.</dd>
+    <dt>활동</dt><dd>
+      <ul>
+        <li>나머지 3명 에이전트 정의 파일 추가</li>
+        <li>PRD 파일 형식 표준화 (체크박스 + 인수 기준 + 자동 검증 명령)</li>
+        <li><code>scripts/nightly-ralph.sh</code> 작성, 야간 첫 시범 운영</li>
+        <li>아침 회수 — 통과 PR 머지·실패 원인 분석</li>
+      </ul>
+    </dd>
+    <dt>완료 기준</dt><dd>밤사이 자율적으로 작업이 진행되고, 아침에 검토할 PR이 2개 이상 쌓여 있다.</dd>
+  </dl>
+</div>
+
+<h2>10. 안티패턴</h2>
+
+<div class="callout bad">
+  <h4>함정 1 — 한 에이전트에 모든 역할 떠넘기기</h4>
+  <p><strong>현상</strong>: "이 Claude한테 다 시키자"고 하면 컨텍스트 창이 곧 가득 차고, 자기 코드를 자기가 검증해 거짓 통과가 나온다.</p>
+  <p><strong>대응</strong>: 처음부터 PM·SWE·QA를 분리. 단일 에이전트로 시작하더라도 역할 의식을 분리.</p>
+</div>
+
+<div class="callout bad">
+  <h4>함정 2 — 같은 디렉터리에서 여러 에이전트 동시 수정</h4>
+  <p><strong>현상</strong>: 워크트리 없이 같은 폴더에서 두 에이전트가 파일을 만지면 덮어쓰기·머지 충돌이 즉시 발생.</p>
+  <p><strong>대응</strong>: 에이전트별 워크트리를 무조건 분리. 한 워크트리 = 한 작업.</p>
+</div>
+
+<div class="callout bad">
+  <h4>함정 3 — 검토 대역폭 초과</h4>
+  <p><strong>현상</strong>: 10명을 동시에 띄웠는데 PR이 한 번에 10개 올라온다. 감독자가 못 따라간다. 결국 대충 머지하다 사고가 난다.</p>
+  <p><strong>대응</strong>: 처음 1개월은 3~5명만 띄움. 검토 대역폭을 우선 측정. PR 자동 검증(QA 에이전트 + CI)을 먼저 단단히 한 뒤 인원을 늘림.</p>
+</div>
+
+<div class="callout bad">
+  <h4>함정 4 — 랠프 루프를 검증 없이 야간에 풀어 둠</h4>
+  <p><strong>현상</strong>: 인수 시나리오가 부실하면 밤사이 "통과했다"고 자기 보고된 PR이 잘못된 구현일 수 있다.</p>
+  <p><strong>대응</strong>: 랠프 루프에 들어가는 PRD 항목은 자동 검증이 가능한 것만. 인수 시나리오는 사람이 한 번 더 본 뒤 PRD에 추가.</p>
+</div>
+
+<div class="callout bad">
+  <h4>함정 5 — 에이전트 통신을 직접 메시지 큐로 만들려고 함</h4>
+  <p><strong>현상</strong>: 처음부터 Redis/카프카 같은 메시지 큐를 도입해 에이전트 간 통신을 구축하려다 본업이 멈춘다.</p>
+  <p><strong>대응</strong><code>send-keys</code>와 파일 시스템(공유 PRD·로그 파일)만으로 충분히 멀리 갈 수 있다. 메시지 큐는 마지막 수단.</p>
+</div>
+
+<div class="callout bad">
+  <h4>함정 6 — 도구를 너무 일찍 갈아탐</h4>
+  <p><strong>현상</strong>: 새 오케스트레이터가 매주 나온다. 매주 셋업을 다시 한다.</p>
+  <p><strong>대응</strong>: 1차로 정한 조합(수제 tmux + Claude Code + 워크트리 + 랠프)으로 최소 1개월 운영한 뒤에만 도구 변경 검토.</p>
+</div>
+
+<h2>11. 출처</h2>
+
+<div class="src">
+  <h4>tmux 멀티 에이전트 운영 — 개념과 사례</h4>
+  <ul>
+    <li><a href="https://dev.to/battyterm/how-tmux-became-the-runtime-for-ai-agent-teams-gmi">DEV — How tmux Became the Runtime for AI Agent Teams</a></li>
+    <li><a href="https://addyosmani.com/blog/code-agent-orchestra/">Addy Osmani — The Code Agent Orchestra: what makes multi-agent coding work</a></li>
+    <li><a href="https://amux.io/blog/best-multi-agent-orchestrators-2026/">amux — Best Multi-Agent Coding Orchestrators in 2026</a></li>
+    <li><a href="https://kau.sh/blog/agent-forking/">Kaushik Gopal — Forking subagents in an AI coding session with tmux</a></li>
+    <li><a href="https://medium.com/@alastair_thomson/agentic-ai-teams-swarms-for-software-development-part-3-5dcd2ef2e6fe">Alastair Thomson — Agentic AI Teams (Swarms) for Software Development</a></li>
+  </ul>
+</div>
+
+<div class="src">
+  <h4>tmux 오케스트레이터 도구</h4>
+  <ul>
+    <li><a href="https://github.com/awslabs/cli-agent-orchestrator">awslabs/cli-agent-orchestrator (CAO)</a></li>
+    <li><a href="https://agentmux.app/">agentmux</a></li>
+    <li><a href="https://github.com/trust-delta/tmai">trust-delta/tmai — Tactful Multi Agents Interface</a></li>
+    <li><a href="https://github.com/absmartly/Tmux-Orchestrator">absmartly/Tmux-Orchestrator</a></li>
+    <li><a href="https://github.com/ComposioHQ/agent-orchestrator">ComposioHQ/agent-orchestrator</a></li>
+    <li><a href="https://github.com/andyrewlee/awesome-agent-orchestrators">andyrewlee/awesome-agent-orchestrators</a></li>
+    <li><a href="https://www.tmux-ide.com/">tmux-ide — Autonomous Multi-Agent Missions</a></li>
+    <li><a href="https://adamwulf.me/2026/01/itty-bitty-ai-agent-orchestrator/">Adam Wulf — IttyBitty for Multi-agent Claude Code</a></li>
+  </ul>
+</div>
+
+<div class="src">
+  <h4>Claude Code 하위 에이전트와 워크트리</h4>
+  <ul>
+    <li><a href="https://code.claude.com/docs/en/sub-agents">Claude Code Docs — Create custom subagents</a></li>
+    <li><a href="https://www.mindstudio.ai/blog/parallel-agentic-development-claude-code-worktrees">MindStudio — Parallel Agentic Development: Multiple Claude Code Sessions at Once</a></li>
+    <li><a href="https://claudefa.st/blog/guide/development/worktree-guide">claudefa.st — Claude Code Worktrees: Parallel Sessions Without Conflicts</a></li>
+    <li><a href="https://docs.agentinterviews.com/blog/parallel-ai-coding-with-gitworktrees/">Agent Interviews — Parallel AI Coding with Git Worktrees and Custom Claude Code Commands</a></li>
+    <li><a href="https://www.claudedirectory.org/blog/claude-code-worktrees-guide">Claude Directory — Claude Code Worktrees Guide (2026)</a></li>
+    <li><a href="https://timdietrich.me/blog/claude-code-parallel-subagents/">Tim Dietrich — How to Use Claude Code Sub-Agents for Parallel Work</a></li>
+  </ul>
+</div>
+
+<div class="src">
+  <h4>AI 에이전트 회사 / 스웜 — 역할과 워크플로</h4>
+  <ul>
+    <li><a href="https://alexeyondata.substack.com/p/i-built-an-ai-agent-team-for-software">Alexey on Data — I Built an AI Agent Team for Software Development</a></li>
+    <li><a href="https://agentsroom.dev/ai-coding-swarm">AgentsRoom — AI Coding Swarm</a></li>
+    <li><a href="https://www.langchain.com/blog/agentic-engineering-redefining-software-engineering">LangChain — Agentic Engineering: Swarms of AI Agents</a></li>
+    <li><a href="https://github.com/zaxbysauce/opencode-swarm">zaxbysauce/opencode-swarm — Architect-centric agentic swarm plugin</a></li>
+    <li><a href="https://www.cio.com/article/4058031/how-software-architects-and-project-managers-can-leverage-agentic-ai.html">CIO — How software architects and PMs can leverage agentic AI</a></li>
+  </ul>
+</div>
+
+<div class="src">
+  <h4>랠프 루프(Ralph Loop) — 자율 반복</h4>
+  <ul>
+    <li><a href="https://github.com/snarktank/ralph">snarktank/ralph — Autonomous AI agent loop</a></li>
+    <li><a href="https://github.com/iannuttall/ralph">iannuttall/ralph — Minimal file-based agent loop</a></li>
+    <li><a href="https://github.com/vercel-labs/ralph-loop-agent">vercel-labs/ralph-loop-agent</a></li>
+    <li><a href="https://medium.com/@tentenco/what-is-ralph-loop-a-new-era-of-autonomous-coding-96a4bb3e2ac8">Ewan Mak — What is Ralph Loop?</a></li>
+    <li><a href="https://www.aihero.dev/getting-started-with-ralph">aihero.dev — Getting Started With Ralph</a></li>
+    <li><a href="https://blakecrosley.com/blog/ralph-agent-architecture">Blake Crosley — The Ralph Loop: How I Run Autonomous AI Agents Overnight</a></li>
+    <li><a href="https://dev.to/alexandergekov/2026-the-year-of-the-ralph-loop-agent-1gkj">DEV — 2026: The year of the Ralph Loop Agent</a></li>
+  </ul>
+</div>
+
+<hr />
+
+<footer>
+  <p>본 보고서는 사용자 의도(tmux 기반 AI 에이전트 회사 구축)에 맞춰 2026년 시점의 멀티 에이전트 오케스트레이션·하위 에이전트·워크트리·랠프 루프 자료를 종합하고, 1단계 첫 출시판(법령 의무 자동화 어플)에 직접 적용 가능한 운영 방식으로 정리했다. 우선 권고는 "수제 tmux + Claude Code + git 워크트리 + 랠프 루프"의 가벼운 조합으로 시작해 운영 데이터를 모은 뒤 전용 오케스트레이터로 옮기는 것이다.</p>
+</footer>
+
+</div>
+</body>
+</html>

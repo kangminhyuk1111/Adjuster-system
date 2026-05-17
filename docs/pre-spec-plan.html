@@ -1,0 +1,732 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>스펙 작성 전 사전 단계 계획 — 1단계 첫 출시판 (법령 의무 자동화 어플)</title>
+<style>
+  :root {
+    --ink: #111418;
+    --ink-2: #2b303a;
+    --mute: #6b7280;
+    --line: #e5e7eb;
+    --line-2: #d1d5db;
+    --bg: #fafaf7;
+    --card: #ffffff;
+    --accent: #1f3a8a;
+    --accent-soft: #eef2ff;
+    --warn: #b45309;
+    --warn-soft: #fff7ed;
+    --ok: #166534;
+    --ok-soft: #ecfdf5;
+    --bad: #b91c1c;
+    --bad-soft: #fef2f2;
+    --code-bg: #f3f4f6;
+    --rad: 6px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+  body {
+    font-family: "Pretendard", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-size: 15.5px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1020px; margin: 0 auto; padding: 56px 28px 96px; }
+  h1, h2, h3, h4 { color: var(--ink); letter-spacing: -0.01em; }
+  h1 { font-size: 30px; margin: 0 0 8px; line-height: 1.3; }
+  h2 { font-size: 22px; margin: 56px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 17px; margin: 28px 0 10px; }
+  h4 { font-size: 15px; margin: 18px 0 6px; color: var(--ink-2); }
+  p { margin: 8px 0 12px; }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+  a:hover { border-bottom-color: var(--accent); }
+  ul, ol { margin: 8px 0 14px; padding-left: 22px; }
+  li { margin: 4px 0; }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-size: 0.9em; font-family: "JetBrains Mono", Consolas, monospace; }
+  small, .muted { color: var(--mute); font-size: 13px; }
+
+  .meta {
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: var(--rad);
+    padding: 18px 22px;
+    margin: 24px 0 32px;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 6px 18px;
+    font-size: 13.5px;
+  }
+  .meta dt { color: var(--mute); font-weight: 500; }
+  .meta dd { margin: 0; }
+
+  .toc {
+    border-left: 3px solid var(--accent);
+    background: var(--card);
+    padding: 14px 20px;
+    margin: 24px 0 40px;
+    border-radius: 0 var(--rad) var(--rad) 0;
+  }
+  .toc ol { margin: 4px 0; padding-left: 22px; font-size: 14.5px; }
+  .toc li { margin: 3px 0; }
+  .toc strong { color: var(--ink); }
+
+  .callout {
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    background: var(--card);
+    border-radius: var(--rad);
+    padding: 14px 18px;
+    margin: 14px 0 22px;
+  }
+  .callout.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+  .callout.ok { border-left-color: var(--ok); background: var(--ok-soft); }
+  .callout.bad { border-left-color: var(--bad); background: var(--bad-soft); }
+  .callout h4 { margin-top: 0; }
+
+  .pattern {
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: var(--rad);
+    padding: 18px 22px;
+    margin: 14px 0;
+  }
+  .pattern h3 {
+    margin-top: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .pattern .pnum {
+    background: var(--accent);
+    color: #fff;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .pattern dl {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 6px 14px;
+    margin: 12px 0 4px;
+    font-size: 14px;
+  }
+  .pattern dt { color: var(--mute); font-weight: 500; }
+  .pattern dd { margin: 0; }
+
+  .step {
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: var(--rad);
+    padding: 20px 22px;
+    margin: 16px 0;
+  }
+  .step .head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .step .sname {
+    background: var(--accent);
+    color: #fff;
+    padding: 3px 11px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .step h3 { margin: 0; font-size: 17px; }
+  .step .when { color: var(--mute); font-size: 13px; }
+  .step dl {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 6px 14px;
+    margin: 12px 0 4px;
+    font-size: 14px;
+  }
+  .step dt { color: var(--mute); font-weight: 500; }
+  .step dd { margin: 0; }
+
+  table.mx {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0 28px;
+    font-size: 13.5px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--rad);
+    overflow: hidden;
+  }
+  table.mx th, table.mx td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  table.mx th {
+    background: #f3f4f6;
+    font-weight: 600;
+    font-size: 12.5px;
+    color: var(--ink-2);
+  }
+  table.mx tr:last-child td { border-bottom: none; }
+
+  .tl {
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: var(--rad);
+    padding: 16px 22px;
+    margin: 14px 0 22px;
+  }
+  .tl ul { list-style: none; padding-left: 0; margin: 0; }
+  .tl li {
+    position: relative;
+    padding: 6px 0 6px 22px;
+    border-left: 2px solid var(--line);
+    margin-left: 6px;
+  }
+  .tl li::before {
+    content: "";
+    position: absolute;
+    left: -7px;
+    top: 14px;
+    width: 12px;
+    height: 12px;
+    background: var(--accent);
+    border-radius: 50%;
+    border: 2px solid var(--card);
+  }
+  .tl li .d { color: var(--accent); font-weight: 600; font-size: 13.5px; }
+  .tl li .t { color: var(--ink-2); font-size: 14px; margin-left: 8px; }
+
+  .check {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--rad);
+    padding: 16px 22px;
+    margin: 14px 0;
+  }
+  .check h4 { margin-top: 0; }
+  .check ul { list-style: none; padding-left: 0; }
+  .check li {
+    padding: 4px 0 4px 28px;
+    position: relative;
+  }
+  .check li::before {
+    content: "□";
+    position: absolute;
+    left: 6px;
+    top: 4px;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  .src {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--rad);
+    padding: 16px 22px;
+    margin: 18px 0;
+    font-size: 13.5px;
+  }
+  .src h4 { margin-top: 0; }
+  .src ul { padding-left: 18px; }
+
+  footer {
+    margin-top: 72px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    color: var(--mute);
+    font-size: 12.5px;
+  }
+  hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="muted" style="margin:0 0 6px; letter-spacing:0.04em; text-transform:uppercase; font-size:12px;">스펙 작성 전 사전 단계 계획</p>
+  <h1>스펙을 적기 전에 무엇을 먼저 해야 하는가</h1>
+  <p class="muted">베스트 프랙티스 리서치와 1단계 첫 출시판(법령 의무 자동화 어플) 맥락에 맞춘 사전 작업 6주 제안.</p>
+</header>
+
+<dl class="meta">
+  <dt>대상</dt><dd>1단계 첫 출시판 — 손해사정서 자동 작성 + 피해자 전자 확인 + 보험사 교부 기록</dd>
+  <dt>입력</dt><dd><code>docs/painpoints.html</code>, <code>docs/service-direction.html</code>, 별첨1·2 손해사정 보고서, 사업계획서</dd>
+  <dt>결정 대상</dt><dd>(1) 사전 단계 베스트 프랙티스 6가지, (2) 우리 프로젝트 6주 일정, (3) 단계별 산출물, (4) 피해야 할 함정</dd>
+  <dt>출처</dt><dd>2026년 발표된 스펙 기반 개발(SDD) 가이드, 도메인 주도 설계 자료, 시범 운영(MVP) 가이드, 기술 결정 문서(RFC) 자료. 8장 참조.</dd>
+  <dt>작성일</dt><dd>2026-05-17</dd>
+</dl>
+
+<div class="callout">
+  <h4>한 줄 결론</h4>
+  <p>스펙(<code>spec/</code> 폴더)을 적기 전에 <strong>도메인 학습 → 사건 흐름 워크숍 → 위험 검증 → 기술 결정 문서 → 뼈대 시스템 배포</strong>의 5개 사전 단계를 차례로 거친다. 합계 약 <strong>4~6주</strong>. 이 사전 단계 없이 스펙부터 적으면 도메인 용어가 빈약해 모호한 스펙이 나오고, 위험한 통합(보험사 교부 기록 채널·전자서명·PDF 자동 작성)이 마지막에 터진다.</p>
+  <p>핵심 원칙 셋. (가) <strong>스펙은 짧게(1~3쪽), 분명하게, 범위 밖도 명시</strong>한다. (나) <strong>위험한 부분부터 얇게 관통</strong>해서 작동 가능성을 먼저 확인한다 (예광탄 검증). (다) <strong>배포 가능한 뼈대를 먼저 올린 뒤</strong> 그 위에 기능을 채운다 (뼈대 시스템).</p>
+</div>
+
+<nav class="toc">
+  <strong>목차</strong>
+  <ol>
+    <li>왜 사전 단계가 필요한가</li>
+    <li>업계 베스트 프랙티스 6가지 패턴</li>
+    <li>우리 프로젝트 사전 단계 6주 계획</li>
+    <li>단계별 산출물 체크리스트</li>
+    <li>피해야 할 함정(안티 패턴)</li>
+    <li>스펙 작성으로 넘어가는 시점 — 합격선</li>
+    <li>역할 분담 제안</li>
+    <li>출처</li>
+  </ol>
+</nav>
+
+<h2>1. 왜 사전 단계가 필요한가</h2>
+
+<p>스펙 기반 개발(Spec-Driven Development)은 "스펙 → 계획 → 작업 → 구현"의 4단계로 흐른다. 그러나 <strong>첫 스펙을 적으려면 그 전에 알아야 할 것이 있다</strong>. 이 어플의 경우 특히 그렇다.</p>
+
+<ul>
+  <li><strong>도메인 용어가 정착되지 않으면 스펙은 모호해진다.</strong> 손해사정서/현장보고서/중간보고서/종결보고서, 안분식·과실상계, 손해사정사 위탁 동의서 등은 외부 시각에서 단어가 비슷해 보이지만 법적 효과와 흐름이 다르다. 용어집과 사건 흐름이 먼저 굳어야 한다.</li>
+  <li><strong>위험한 통합은 마지막에 터진다.</strong> 보험사 교부 기록 채널, 전자서명 법적 유효성, PDF 자동 작성 정확도는 외부 의존이다. 사전 단계에서 얇게 관통해 보지 않으면 1단계 출시 직전에 발견된다.</li>
+  <li><strong>"out of scope"가 정해지지 않으면 스펙이 무한정 부푼다.</strong> 1단계 첫 출시판은 한 흐름만 동작하면 된다. 무엇을 넣지 않을지를 먼저 정한다.</li>
+  <li><strong>뼈대 시스템(Walking Skeleton)을 먼저 배포해 두면 빌드·배포·인증·모니터링 같은 횡단 이슈가 첫날부터 드러난다.</strong> 이런 이슈는 기능이 다 만들어진 뒤에 발견하면 비용이 크다.</li>
+</ul>
+
+<h2>2. 업계 베스트 프랙티스 6가지 패턴</h2>
+
+<p>2026년 시점에 정리된 자료를 종합하면 사전 단계는 다음 6가지 패턴으로 수렴한다. 각 패턴은 우리 프로젝트의 한 단계와 직접 매핑된다.</p>
+
+<div class="pattern">
+  <h3><span class="pnum">1</span> 사건 흐름 워크숍 — 이벤트 스토밍(Event Storming)</h3>
+  <dl>
+    <dt>핵심</dt><dd>도메인 전문가와 개발자가 한자리에 모여 시간 순서대로 일어나는 사건(예: "사고 접수됨", "현장조사 완료됨", "손해사정서 교부됨")을 포스트잇으로 붙여 나열한다. 그 다음 행위자·정책·도메인 묶음(Aggregate)·도메인 경계(Bounded Context)를 식별한다.</dd>
+    <dt>왜 필요</dt><dd>도메인 지식이 코드로 들어가기 전에 한 번 정렬된다. 보험사·피해자·사정사 3자의 책임 경계가 명확해진다.</dd>
+    <dt>우리 적용</dt><dd>별첨1·2 보고서를 따라가며 사건 흐름을 추출. 손해사정서 교부와 보험사 인증을 별도 사건으로 분리.</dd>
+  </dl>
+</div>
+
+<div class="pattern">
+  <h3><span class="pnum">2</span> 기술 결정 문서 — RFC / Design Doc</h3>
+  <dl>
+    <dt>핵심</dt><dd>구현 전에 "무엇을 어떻게 풀 것인가"를 짧은 문서로 적고 동료 리뷰를 받는다. 목표·아키텍처·대안·트레이드오프·결정 사항을 담는다.</dd>
+    <dt>왜 필요</dt><dd>의사결정의 근거가 코드 뒤에 숨지 않고 글로 남는다. 1년 뒤 "왜 이렇게 결정했나"를 추적할 수 있다.</dd>
+    <dt>우리 적용</dt><dd>1단계 첫 출시판 단위로 RFC 1편. PDF 자동 작성 라이브러리 선택, 전자서명 방식, 교부 기록 채널 선택, 민감정보 암호화 방식을 모두 한 문서에 정리.</dd>
+  </dl>
+</div>
+
+<div class="pattern">
+  <h3><span class="pnum">3</span> 예광탄 검증 — Tracer Bullet</h3>
+  <dl>
+    <dt>핵심</dt><dd>가장 위험한 부분을 얇은 수직 단면으로 한 번 관통한다. 프로토타입과 달리 <strong>버리지 않고 본 시스템의 시작점이 된다</strong>. 정식 기능이 아니라 위험 검증이 목적.</dd>
+    <dt>왜 필요</dt><dd>외부 의존(보험사 채널, 전자서명, PDF) 같이 작동 여부 자체가 의문인 부분을 일찍 검증한다.</dd>
+    <dt>우리 적용</dt><dd>"빈 손해사정서 → PDF 생성 → 가짜 보험사 메일함으로 송부 → 수신 기록"을 4~5일 안에 한 번 끝까지 통과시킨다.</dd>
+  </dl>
+</div>
+
+<div class="pattern">
+  <h3><span class="pnum">4</span> 뼈대 시스템 — Walking Skeleton</h3>
+  <dl>
+    <dt>핵심</dt><dd>최소한의 끝과 끝(end-to-end) 흐름을 <strong>운영 환경에 배포 가능한 상태로</strong> 만든다. 화면 → API → 데이터베이스 → 인증 → 배포 파이프라인까지 모두 연결되어 있되, 기능은 비어 있다.</dd>
+    <dt>왜 필요</dt><dd>빌드·배포·로그·모니터링 같은 횡단 관심사가 첫날부터 드러난다. 이후 모든 기능은 이 뼈대 위에 살이 붙는다.</dd>
+    <dt>우리 적용</dt><dd>Next.js 빈 화면 → Spring Boot 빈 API → MySQL 빈 스키마 → Docker 이미지 → 배포까지 1주 안에 한 번 흘러가게 한다. 첫 기능은 "사정사 로그인 → 빈 사건 1건 생성 → DB 저장" 정도.</dd>
+  </dl>
+</div>
+
+<div class="pattern">
+  <h3><span class="pnum">5</span> 요구사항 문장 패턴 — EARS(Easy Approach to Requirements Syntax)</h3>
+  <dl>
+    <dt>핵심</dt><dd>요구사항을 다섯 가지 정해진 문장 틀로만 적는다. 모호한 문장이 줄어들고 자동 검증이 쉬워진다. 예: "<em>[사건이 종결로 표시된 경우], 시스템은 [표준 양식대로 손해사정서를 자동 생성]해야 한다.</em>"</dd>
+    <dt>왜 필요</dt><dd>"잘 처리한다", "적절히 보여 준다" 같은 모호한 문장이 사라진다. 인수 시나리오가 곧바로 도출된다.</dd>
+    <dt>우리 적용</dt><dd>스펙 작성 단계에서 채택. 사전 단계에서는 도메인 용어집을 만들어 EARS 문장의 단어들이 이미 정의되어 있도록 한다.</dd>
+  </dl>
+</div>
+
+<div class="pattern">
+  <h3><span class="pnum">6</span> 범위 밖(out of scope) 명시 + 1~3쪽 짧은 스펙</h3>
+  <dl>
+    <dt>핵심</dt><dd>스펙은 짧을수록 좋다. 길어지면 쪼갠다. "이 스펙이 다루지 않는 것"을 별도 절로 명시한다.</dd>
+    <dt>왜 필요</dt><dd>긴 스펙은 안 읽힌다. 범위 밖이 적히지 않으면 구현 도중 "이것도 해야 하나"가 끊임없이 나온다.</dd>
+    <dt>우리 적용</dt><dd>1단계 스펙은 단일 흐름(종결 → 손해사정서 → 전자 확인 → 교부 기록) 한 편으로 시작. 보고서 자동 작성·중복보험 안분 등은 "out of scope"로 명시(2·3단계 이관).</dd>
+  </dl>
+</div>
+
+<h2>3. 우리 프로젝트 사전 단계 6주 계획</h2>
+
+<p>위 6가지 패턴을 단계로 펼치면 다음과 같다. 각 단계는 합격선(다음 단계로 넘어가는 기준)을 갖는다.</p>
+
+<div class="step">
+  <div class="head">
+    <span class="sname">0주차</span>
+    <h3>도메인 학습과 자료 수집</h3>
+    <span class="when">소요 1주</span>
+  </div>
+  <dl>
+    <dt>활동</dt><dd>
+      <ul>
+        <li>별첨1(학교 축구 안와골절 사고)·별첨2(음식점 가스배관 사고) 보고서 정독, 사건 흐름과 등장 문서 추출</li>
+        <li>손해사정 용어집(Glossary) 초안 작성 — 사고/사건/케이스/청구/종결 등 동의어 통일</li>
+        <li>보험업법 제185조, 시행세칙(2025.10.28), 시행령 일부개정안(2026.1.1) 최신 문구 확보</li>
+        <li>표준 손해사정서 양식 1~2종 확보 (PDF/DOCX)</li>
+        <li>현장에서 활동 중인 사정사 3~5인 인터뷰 일정 잡기</li>
+      </ul>
+    </dd>
+    <dt>산출물</dt><dd>도메인 용어집 v0.1, 사건 흐름 메모, 법령 발췌본, 양식 원본</dd>
+    <dt>합격선</dt><dd>별첨1·2의 모든 등장 문서·등장 행위자·시간 순서를 글로 설명할 수 있다.</dd>
+  </dl>
+</div>
+
+<div class="step">
+  <div class="head">
+    <span class="sname">1주차</span>
+    <h3>사정사 인터뷰 + 사건 흐름 워크숍</h3>
+    <span class="when">소요 1주</span>
+  </div>
+  <dl>
+    <dt>활동</dt><dd>
+      <ul>
+        <li>사정사 3~5인 인터뷰 — 종결 시 손해사정서 작성·교부·인증의 실제 흐름, 보험사별 차이, 가장 시간이 많이 드는 부분, 거부감의 원인</li>
+        <li>사건 흐름 워크숍 — 사건을 시간 순서로 나열, 도메인 묶음과 경계 식별 (예: "사건", "당사자", "서류", "보고서", "교부 기록", "동의" 등)</li>
+        <li>"out of scope" 1차 결정 — 1단계가 다루지 않을 것 명시 (보고서 자동 작성, 중복보험 안분, 피해자 매칭, 보험내역 연계 등)</li>
+      </ul>
+    </dd>
+    <dt>산출물</dt><dd>인터뷰 노트, 도메인 사건 지도(이벤트 스토밍 결과), 도메인 묶음 목록, 범위 밖 목록</dd>
+    <dt>합격선</dt><dd>한 사건이 어플 안에서 어떤 사건들을 거치는지 도식으로 그릴 수 있다. 도메인 묶음이 5~8개로 정리됐다.</dd>
+  </dl>
+</div>
+
+<div class="step">
+  <div class="head">
+    <span class="sname">2주차</span>
+    <h3>위험 식별과 예광탄 검증</h3>
+    <span class="when">소요 1주</span>
+  </div>
+  <dl>
+    <dt>활동</dt><dd>
+      <ul>
+        <li>위험 목록 작성 — 보험사 교부 기록 채널, 전자서명 법적 효력, 민감정보 암호화, PDF 자동 작성 정확도, 사정사 디지털 적응</li>
+        <li>예광탄 1편: "빈 손해사정서 → PDF 자동 작성 → 가짜 보험사 메일함으로 송부 → 수신 시각 기록"을 4~5일 안에 한 번 흘려보낸다 (UI 없이 명령줄로도 OK)</li>
+        <li>예광탄 2편: 전자서명 라이브러리 1~2종 후보를 골라 정자체 사인 자동 기입 + 위치 사전 지정 가능 여부 검증</li>
+      </ul>
+    </dd>
+    <dt>산출물</dt><dd>위험 매트릭스(영향/확률/대응), 예광탄 코드 2편, 라이브러리 후보 비교 메모</dd>
+    <dt>합격선</dt><dd>"이 흐름이 작동하는가"라는 의문 5개 중 최소 3개가 해소됐다. 작동 안 하는 부분은 대안이 있다.</dd>
+  </dl>
+</div>
+
+<div class="step">
+  <div class="head">
+    <span class="sname">3주차</span>
+    <h3>기술 결정 문서(RFC) 작성과 동료 리뷰</h3>
+    <span class="when">소요 3~5일</span>
+  </div>
+  <dl>
+    <dt>활동</dt><dd>
+      <ul>
+        <li>RFC 1편 작성 — 1단계 첫 출시판의 목표·아키텍처·도메인 모델 요약·외부 의존·대안·결정 사항·범위 밖</li>
+        <li>구체 결정: PDF 라이브러리 선택, 전자서명 방식, 교부 기록 채널 1순위·2순위, 민감정보 암호화 방식, 인증 방식, 배포 환경</li>
+        <li>동료 리뷰 — 적어도 1~2인이 글로 의견 남기게 한다. 결정 사항을 본인 글로 다시 쓸 수 있어야 함</li>
+      </ul>
+    </dd>
+    <dt>산출물</dt><dd><code>docs/rfc/001-compliance-mvp.md</code></dd>
+    <dt>합격선</dt><dd>RFC를 처음 보는 사람이 30분 안에 "이 어플의 1단계가 뭘 하는지·어떻게 만드는지"를 답할 수 있다.</dd>
+  </dl>
+</div>
+
+<div class="step">
+  <div class="head">
+    <span class="sname">4주차</span>
+    <h3>뼈대 시스템 배포</h3>
+    <span class="when">소요 1주</span>
+  </div>
+  <dl>
+    <dt>활동</dt><dd>
+      <ul>
+        <li>저장소 구조 결정 — <code>backend/</code>(Spring Boot), <code>frontend/</code>(Next.js), <code>spec/</code>, <code>docs/</code></li>
+        <li>최소 흐름 1개를 끝과 끝으로 연결: "사정사 로그인 → 빈 사건 1건 생성 → DB 저장 → 화면 표시"</li>
+        <li>Docker 이미지 빌드, MySQL 컨테이너 연결, 개발 환경 배포</li>
+        <li>지속적 통합(CI) — 푸시 시 빌드·테스트·정적 분석 자동 실행</li>
+        <li>로그·기본 모니터링 한 줄짜리 첫 설치</li>
+      </ul>
+    </dd>
+    <dt>산출물</dt><dd>운영 환경에 배포된 빈 어플, CI 설정, README와 실행 가이드</dd>
+    <dt>합격선</dt><dd>새 개발자가 30분 안에 로컬에서 어플을 띄우고 1건 입력해 볼 수 있다. 푸시 한 번에 자동 배포된다.</dd>
+  </dl>
+</div>
+
+<div class="step">
+  <div class="head">
+    <span class="sname">5주차</span>
+    <h3>첫 스펙 작성으로 진입</h3>
+    <span class="when">소요 3~5일</span>
+  </div>
+  <dl>
+    <dt>활동</dt><dd>
+      <ul>
+        <li><code>spec/</code> 폴더 골격 잡기 — 스펙은 도메인 묶음 단위로 1개 파일 1~3쪽</li>
+        <li>EARS 패턴으로 1단계 첫 출시판 스펙 작성 (손해사정서 자동 작성, 피해자 전자 확인, 교부 기록)</li>
+        <li>각 스펙마다 "out of scope" 절·인수 시나리오·외부 의존 명시</li>
+        <li>스펙 → 계획 → 작업 → 구현 흐름 시작</li>
+      </ul>
+    </dd>
+    <dt>산출물</dt><dd><code>spec/</code> 폴더의 3~5편 스펙</dd>
+    <dt>합격선</dt><dd>스펙 하나를 읽고 인수 테스트 3건 이상을 자동으로 도출할 수 있다.</dd>
+  </dl>
+</div>
+
+<h3>전체 일정 한눈에</h3>
+
+<div class="tl">
+  <ul>
+    <li><span class="d">0주차 (1주)</span><span class="t">도메인 학습 — 별첨 정독·용어집·법령·양식 수집</span></li>
+    <li><span class="d">1주차 (1주)</span><span class="t">사정사 인터뷰 + 사건 흐름 워크숍 + 범위 밖 결정</span></li>
+    <li><span class="d">2주차 (1주)</span><span class="t">위험 매트릭스 + 예광탄 2편 (PDF·전자서명·교부 기록)</span></li>
+    <li><span class="d">3주차 (3~5일)</span><span class="t">RFC 작성 + 동료 리뷰</span></li>
+    <li><span class="d">4주차 (1주)</span><span class="t">뼈대 시스템 운영 배포 + CI 설정</span></li>
+    <li><span class="d">5주차 (3~5일)</span><span class="t">스펙 작성 진입 — 1단계 첫 출시판 본격 개발 시작</span></li>
+    <li><span class="d">합계</span><span class="t">약 4~6주 (소속/일정에 따라 압축 가능)</span></li>
+  </ul>
+</div>
+
+<h2>4. 단계별 산출물 체크리스트</h2>
+
+<div class="check">
+  <h4>0주차 — 도메인 학습</h4>
+  <ul>
+    <li>도메인 용어집 v0.1 (<code>docs/glossary.md</code>) — 사정사 용어 30개 이상 정의</li>
+    <li>별첨1·2 사건 흐름 요약 메모</li>
+    <li>법령 발췌본 (제185조·시행세칙·시행령 일부개정안)</li>
+    <li>표준 손해사정서 양식 1종 이상 PDF/DOCX 확보</li>
+    <li>사정사 인터뷰 일정 3명 이상 확정</li>
+  </ul>
+</div>
+
+<div class="check">
+  <h4>1주차 — 인터뷰 + 사건 흐름</h4>
+  <ul>
+    <li>인터뷰 노트 3편 이상</li>
+    <li>도메인 사건 지도 (이벤트 스토밍 결과를 사진/도식으로 보존)</li>
+    <li>도메인 묶음 목록 5~8개</li>
+    <li>1단계 범위 밖 목록 (안 만들 기능 명시)</li>
+  </ul>
+</div>
+
+<div class="check">
+  <h4>2주차 — 위험 + 예광탄</h4>
+  <ul>
+    <li>위험 매트릭스 (영향 × 확률 × 대응)</li>
+    <li>예광탄 1편 코드 — PDF 자동 작성 + 교부 송부 + 수신 기록</li>
+    <li>예광탄 2편 코드 — 전자서명/정자체 사인 자동 기입</li>
+    <li>라이브러리 후보 비교 메모</li>
+  </ul>
+</div>
+
+<div class="check">
+  <h4>3주차 — RFC</h4>
+  <ul>
+    <li><code>docs/rfc/001-compliance-mvp.md</code></li>
+    <li>아키텍처 도식 (단순 사각형/화살표 수준이라도)</li>
+    <li>1~2인 동료 리뷰 코멘트 반영</li>
+  </ul>
+</div>
+
+<div class="check">
+  <h4>4주차 — 뼈대 시스템</h4>
+  <ul>
+    <li>저장소 골격 (<code>backend/</code>, <code>frontend/</code>, <code>spec/</code>, <code>docs/</code>)</li>
+    <li>Docker Compose 또는 개발 환경 실행 스크립트</li>
+    <li>CI 워크플로 (빌드·테스트·정적 분석)</li>
+    <li>개발 환경 배포 1회 성공</li>
+    <li>README — 30분 안에 띄우는 방법</li>
+  </ul>
+</div>
+
+<div class="check">
+  <h4>5주차 — 스펙 진입</h4>
+  <ul>
+    <li><code>spec/</code> 폴더 3~5편</li>
+    <li>각 스펙은 1~3쪽, 범위 밖 명시, 인수 시나리오 포함</li>
+    <li>EARS 패턴 적용</li>
+    <li>도메인 용어집과 스펙 단어 교차 검증</li>
+  </ul>
+</div>
+
+<h2>5. 피해야 할 함정(안티 패턴)</h2>
+
+<div class="callout bad">
+  <h4>함정 1 — 사전 단계 없이 바로 스펙</h4>
+  <p><strong>현상</strong>: "그냥 적자"고 시작하면 도메인 용어가 흔들리고, "사건"인지 "케이스"인지 "청구"인지가 절마다 다르다.</p>
+  <p><strong>대응</strong>: 1주차에 도메인 용어집을 먼저 굳힌다. 같은 개념을 하나의 단어로만 부른다.</p>
+</div>
+
+<div class="callout bad">
+  <h4>함정 2 — 사전 단계가 끝나지 않고 무한 연장</h4>
+  <p><strong>현상</strong>: 인터뷰가 인터뷰를 부르고, RFC가 RFC를 부른다. 코드가 한 줄도 안 나온다.</p>
+  <p><strong>대응</strong>: 각 단계에 합격선과 마감을 둔다. 6주가 지나면 무조건 스펙으로 넘어간다. 부족한 부분은 스펙 진입 후에도 보강 가능하다.</p>
+</div>
+
+<div class="callout bad">
+  <h4>함정 3 — 뼈대 시스템을 마지막으로 미룸</h4>
+  <p><strong>현상</strong>: 기능을 다 만든 뒤에 배포하려고 하면 빌드·CI·인증·로그·환경 변수 같은 횡단 이슈가 한꺼번에 터진다.</p>
+  <p><strong>대응</strong>: 4주차에 무조건 운영 환경에 빈 어플을 한 번 띄운다. 이후 모든 기능은 이 뼈대 위에 살을 붙이는 방식.</p>
+</div>
+
+<div class="callout bad">
+  <h4>함정 4 — 예광탄을 프로토타입처럼 버림</h4>
+  <p><strong>현상</strong>: 예광탄으로 검증한 코드를 "임시"라며 버리고 다시 짠다. 같은 위험을 두 번 검증한다.</p>
+  <p><strong>대응</strong>: 예광탄은 본 시스템의 시작점이다. 코드 품질을 처음부터 운영 수준으로 유지한다. 프로토타입과 예광탄은 다른 개념.</p>
+</div>
+
+<div class="callout bad">
+  <h4>함정 5 — 첫 스펙이 너무 김</h4>
+  <p><strong>현상</strong>: 한 스펙에 모든 기능을 욱여넣어 10쪽이 넘는다. 안 읽힌다.</p>
+  <p><strong>대응</strong>: 1~3쪽을 넘으면 쪼갠다. 도메인 묶음 단위로 스펙 1편.</p>
+</div>
+
+<div class="callout bad">
+  <h4>함정 6 — "out of scope"를 적지 않음</h4>
+  <p><strong>현상</strong>: 구현 중에 "이것도 1단계 아닌가?"가 계속 나온다. 범위가 부푼다.</p>
+  <p><strong>대응</strong>: 모든 스펙은 "이 스펙이 다루지 않는 것" 절을 갖는다. 명시되지 않은 것은 다음 단계로.</p>
+</div>
+
+<h2>6. 스펙 작성으로 넘어가는 시점 — 합격선</h2>
+
+<p>다음 6개가 모두 yes면 5주차의 스펙 작성을 시작한다. 하나라도 no면 그 항목을 보강한 뒤 진입한다.</p>
+
+<table class="mx">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>합격 조건</th>
+      <th>확인 방법</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td>도메인 용어 30개 이상이 한 단어로만 정의됐다.</td><td><code>docs/glossary.md</code> 검토</td></tr>
+    <tr><td>2</td><td>한 사건의 시간 순서 흐름을 도식으로 그릴 수 있다.</td><td>사건 흐름 워크숍 결과물</td></tr>
+    <tr><td>3</td><td>1단계 범위 밖 목록이 글로 적혔다.</td><td>워크숍 결과물</td></tr>
+    <tr><td>4</td><td>PDF 자동 작성·교부 송부 흐름이 명령줄로라도 한 번 통과했다.</td><td>예광탄 1편 실행 로그</td></tr>
+    <tr><td>5</td><td>RFC 1편이 동료 리뷰를 통과했다.</td><td><code>docs/rfc/001-compliance-mvp.md</code></td></tr>
+    <tr><td>6</td><td>뼈대 시스템이 운영 환경에 배포됐고 푸시 시 자동 배포된다.</td><td>배포 URL + CI 통과 기록</td></tr>
+  </tbody>
+</table>
+
+<h2>7. 역할 분담 제안</h2>
+
+<p>1인 개발 가정일 경우에도 단계별 모자를 바꿔 쓰는 식으로 적용 가능하다.</p>
+
+<table class="mx">
+  <thead>
+    <tr>
+      <th>역할</th>
+      <th>책임</th>
+      <th>1인 개발 시 적용</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>도메인 학습자</td>
+      <td>별첨·법령·양식 정독, 용어집 작성</td>
+      <td>0주차에 집중</td>
+    </tr>
+    <tr>
+      <td>인터뷰어</td>
+      <td>사정사 인터뷰 진행, 워크숍 진행</td>
+      <td>1주차에 집중</td>
+    </tr>
+    <tr>
+      <td>위험 검증자</td>
+      <td>예광탄 코드 작성, 라이브러리 비교</td>
+      <td>2주차에 집중</td>
+    </tr>
+    <tr>
+      <td>아키텍트</td>
+      <td>RFC 작성, 동료 리뷰 수령</td>
+      <td>3주차에 집중. 동료 리뷰는 외부 1~2인에게 부탁</td>
+    </tr>
+    <tr>
+      <td>운영 엔지니어</td>
+      <td>뼈대 시스템 배포, CI, 모니터링</td>
+      <td>4주차에 집중</td>
+    </tr>
+    <tr>
+      <td>스펙 작성자</td>
+      <td>EARS 스펙, 인수 시나리오, 범위 명시</td>
+      <td>5주차에 집중</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>8. 출처</h2>
+
+<div class="src">
+  <h4>스펙 기반 개발(SDD) — 2026년 자료</h4>
+  <ul>
+    <li><a href="https://thebcms.com/blog/spec-driven-development">BCMS — Spec-Driven Development (SDD): The Definitive 2026 Guide</a></li>
+    <li><a href="https://www.augmentcode.com/guides/what-is-spec-driven-development">Augment Code — What Is Spec-Driven Development? A Complete Guide</a></li>
+    <li><a href="https://thoughtworks.medium.com/spec-driven-development-d85995a81387">Thoughtworks — Spec-driven development</a></li>
+    <li><a href="https://www.infoq.com/articles/enterprise-spec-driven-development/">InfoQ — Spec-Driven Development: Adoption at Enterprise Scale</a></li>
+    <li><a href="https://towardsdatascience.com/from-vibe-coding-to-spec-driven-development/">Towards Data Science — From Vibe Coding to Spec-Driven Development</a></li>
+    <li><a href="https://zencoder.ai/blog/spec-driven-development">Zencoder — Spec-Driven Development: Everything You Need to Know (2026)</a></li>
+    <li><a href="https://evangelistsoftware.com/blog/spec-driven-development-guide/">Evangelist Software — Spec Driven Development (2026)</a></li>
+  </ul>
+</div>
+
+<div class="src">
+  <h4>시범 운영(MVP) 사전 단계 / 도입 단계(Inception Phase)</h4>
+  <ul>
+    <li><a href="https://theappsolutions.com/blog/development/discovery-phase/">The APP Solutions — The Inception Phase of Software Development: Best Practices and Project Documentation</a></li>
+    <li><a href="https://www.scnsoft.com/software-development/mvp">ScienceSoft — MVP Development: A Full Guide</a></li>
+    <li><a href="https://www.uxpin.com/studio/blog/mvp-software-development-how-to/">UXPin — MVP Software Development: How to Build an MVP in 2026</a></li>
+    <li><a href="https://www.valuecoders.com/blog/software-engineering/11-step-checklist-to-build-successful-mvp-for-startup/">ValueCoders — 11-Step MVP Development Guide for Startups</a></li>
+    <li><a href="https://huspi.com/blog-open/inception-phase-how-to-start-your-project-right/">HUSPI — Inception Phase: How to Start Your Healthtech Project Right</a></li>
+    <li><a href="https://djangostars.com/blog/guide-mvp-mmp-mlp-mdp-map-startup-stages/">Django Stars — Your Guide to MVP, MMP, MLP, MDP and MAP Startup Stages</a></li>
+  </ul>
+</div>
+
+<div class="src">
+  <h4>뼈대 시스템(Walking Skeleton) · 예광탄(Tracer Bullet)</h4>
+  <ul>
+    <li><a href="https://codeclimate.com/blog/kickstart-your-next-project-with-a-walking-skeleton">Code Climate — Kickstart Your Next Project with a Walking Skeleton</a></li>
+    <li><a href="https://tinnedfruit.com/list/20180815">Jim Newbery — Walking skeletons and tracer bullets</a></li>
+    <li><a href="https://tinnedfruit.com/list/20180813">Jim Newbery — Prototypes, proofs of concept, walking skeletons and MVPs</a></li>
+    <li><a href="https://builtin.com/software-engineering-perspectives/what-are-tracer-bullets">Built In — How Tracer Bullets Speed Up Software Development</a></li>
+    <li><a href="https://www.defmyfunc.com/2019_10_18_walking_skeleton/">@defmyfunc — Integration, integration, integration. An introduction to walking skeletons in the enterprise</a></li>
+    <li><a href="https://medium.com/learn-agile-practices/first-steps-in-code-the-significance-of-a-walking-skeleton-in-new-projects-5eb85613244c">Learn Agile Practices — The Significance of a Walking Skeleton in New Projects</a></li>
+    <li><a href="https://thedigitalbusinessanalyst.co.uk/building-features-as-part-of-discovery-952df9c5a65b">The Digital Business Analyst — Tracer-Bullet: Why we should build features during discovery</a></li>
+  </ul>
+</div>
+
+<div class="src">
+  <h4>도메인 주도 설계(DDD) · 사건 흐름 워크숍(Event Storming)</h4>
+  <ul>
+    <li><a href="https://en.wikipedia.org/wiki/Event_storming">Wikipedia — Event storming</a></li>
+    <li><a href="https://www.lucidchart.com/blog/ddd-event-storming">Lucidchart — Event Storming 101: Accelerating Your Software Development in DDD</a></li>
+    <li><a href="https://medium.com/building-inventa/how-we-used-event-storming-meetings-for-enabling-software-domain-driven-design-401e5d708eb">Building Inventa — How we used Event Storming Meetings for enabling Software DDD</a></li>
+    <li><a href="https://philippe.bourgau.net/how-to-use-event-storming-to-introduce-domain-driven-design/">Philippe Bourgau — How to use Event Storming to introduce Domain Driven Design</a></li>
+    <li><a href="https://ibm-cloud-architecture.github.io/refarch-eda/methodology/event-storming/">IBM Cloud Architecture — Event Storming Methodology</a></li>
+  </ul>
+</div>
+
+<div class="src">
+  <h4>기술 결정 문서(RFC / Design Doc / ADR)</h4>
+  <ul>
+    <li><a href="https://blog.pragmaticengineer.com/rfcs-and-design-docs/">The Pragmatic Engineer — Companies Using RFCs or Design Docs and Examples</a></li>
+    <li><a href="https://newsletter.pragmaticengineer.com/p/rfcs-and-design-docs">The Pragmatic Engineer — Engineering Planning with RFCs, Design Documents and ADRs</a></li>
+    <li><a href="https://newsletter.pragmaticengineer.com/p/software-engineering-rfc-and-design">The Pragmatic Engineer — Software Engineering RFC and Design Doc Examples and Templates</a></li>
+    <li><a href="https://medium.com/juans-and-zeroes/a-thorough-team-guide-to-rfcs-8aa14f8e757c">Juans and Zeroes — A thorough team guide to RFCs</a></li>
+    <li><a href="https://brunoscheufler.com/blog/2020-07-04-documenting-design-decisions-using-rfcs-and-adrs">Bruno Scheufler — Documenting Design Decisions using RFCs and ADRs</a></li>
+    <li><a href="https://engineering-management.space/post/rfc-driven-development/">Engineering Management — RFC driven development</a></li>
+  </ul>
+</div>
+
+<hr />
+
+<footer>
+  <p>본 보고서는 2026년 시점의 스펙 기반 개발·도메인 주도 설계·뼈대 시스템·기술 결정 문서 분야 자료를 종합해, <code>docs/painpoints.html</code>·<code>docs/service-direction.html</code>의 결정 사항(1단계 = 법령 의무 자동화 어플)에 사전 단계 6주 계획으로 매핑한 결과다. 산출물 체크리스트와 합격선은 다음 단계(스펙 작성)로 넘어갈 시점을 판단하는 기준으로 그대로 사용 가능하다.</p>
+</footer>
+
+</div>
+</body>
+</html>
